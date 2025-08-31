@@ -39,7 +39,7 @@ You must provide the `ca65` in your system's `PATH` in order for diagnostics to 
 
 ## Installation
 
-You can install this extension from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=hobbett.vscode-ca65).
+You can install this extension from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=hobbett.ca65-vscode-extension).
 
 Alternatively, in VS Code, open the **Extensions** view (`Ctrl+Shift+X`), search for `ca65 Assembly`, and click **Install**.
 
