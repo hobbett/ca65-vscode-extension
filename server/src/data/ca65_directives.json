@@ -1,0 +1,701 @@
+{
+  "A16": {
+    "type": "Control command",
+    "shortDescription": "Sets the assembler to assume the 65816's accumulator is in 16-bit mode. Does not emit any code.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.1"
+  },
+  "A8": {
+    "type": "Control command",
+    "shortDescription": "Sets the assembler to assume the 65816's accumulator is in 8-bit mode. Does not emit any code.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.2"
+  },
+  "ADDR": {
+    "type": "Control command",
+    "shortDescription": "Emits one or more 16-bit (word-sized) address values into the current segment.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.3"
+  },
+  "ADDRSIZE": {
+    "type": "Pseudo-function",
+    "shortDescription": "Returns the address size (e.g., zeropage, absolute) of a symbol as a number.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.1"
+  },
+  "ALIGN": {
+    "type": "Control command",
+    "shortDescription": "Aligns the program counter to a specific memory boundary by inserting fill bytes.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.4"
+  },
+  "ASCIIZ": {
+    "type": "Control command",
+    "shortDescription": "Emits one or more strings, followed by a single terminating zero byte, into the current segment.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.5"
+  },
+  "ASIZE": {
+    "type": "Pseudo-variable",
+    "shortDescription": "Returns the current size of the Accumulator in bits (8 or 16).",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss9.2"
+  },
+  "ASSERT": {
+    "type": "Control command",
+    "shortDescription": "Asserts that a condition is true. If not, generates a warning or error during assembly or linking.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.6"
+  },
+  "AUTOIMPORT": {
+    "type": "Control command",
+    "shortDescription": "Controls whether undefined symbols are automatically treated as imports.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.7"
+  },
+  "BANK": {
+    "type": "Pseudo-function",
+    "shortDescription": "Returns the `bank` attribute number assigned to a label's segment in the linker configuration.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.2"
+  },
+  "BANKBYTE": {
+    "type": "Pseudo-function",
+    "shortDescription": "Returns the bank byte (bits 16-23) of its argument.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.3"
+  },
+  "BANKBYTES": {
+    "type": "Control command",
+    "shortDescription": "Emits the bank byte (bits 16-23) of one or more expressions.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.8"
+  },
+  "BLANK": {
+    "type": "Pseudo-function",
+    "shortDescription": "Returns true if the given token list is blank, otherwise false.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.4"
+  },
+  "BSS": {
+    "type": "Control command",
+    "shortDescription": "Switches to the BSS segment, typically used for uninitialized data.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.9"
+  },
+  "BYTE": {
+    "type": "Control command",
+    "shortDescription": "Emits one or more 8-bit (byte-sized) values or strings into the current segment.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.10"
+  },
+  "BYT": "BYTE",
+  "CAP": {
+    "type": "Pseudo-function",
+    "shortDescription": "Checks if the current CPU or target system has a specific capability.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.5"
+  },
+  "CAPABILITY": "CAP",
+  "CASE": {
+    "type": "Control command",
+    "shortDescription": "Controls whether identifiers and labels are case-sensitive.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.11"
+  },
+  "CHARMAP": {
+    "type": "Control command",
+    "shortDescription": "Applies a custom mapping for a single character code.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.12"
+  },
+  "CODE": {
+    "type": "Control command",
+    "shortDescription": "Switches to the CODE segment, typically used for executable code.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.13"
+  },
+  "CONCAT": {
+    "type": "Pseudo-function",
+    "shortDescription": "Concatenates a list of string constants into a single string.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.6"
+  },
+  "CONDES": {
+    "type": "Control command",
+    "shortDescription": "Exports a symbol and marks it as a constructor, destructor, or other special routine type.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.14"
+  },
+  "CONST": {
+    "type": "Pseudo-function",
+    "shortDescription": "Returns true if its argument is a constant expression resolvable at assembly time.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.7"
+  },
+  "CONSTRUCTOR": {
+    "type": "Control command",
+    "shortDescription": "Exports a symbol and marks it as a module constructor.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.15"
+  },
+  "CPU": {
+    "type": "Pseudo-variable",
+    "shortDescription": "Returns a constant integer representing the currently enabled CPU instruction set.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss9.3"
+  },
+  "DATA": {
+    "type": "Control command",
+    "shortDescription": "Switches to the DATA segment, typically used for initialized data.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.16"
+  },
+  "DBYT": {
+    "type": "Control command",
+    "shortDescription": "Emits one or more 16-bit values in big-endian (high-byte first) order.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.17"
+  },
+  "DEBUGINFO": {
+    "type": "Control command",
+    "shortDescription": "Controls whether debug information is added to the object file.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.18"
+  },
+  "DEF": "DEFINED",
+  "DEFINE": {
+    "type": "Control command",
+    "shortDescription": "Defines a C-style, token-based macro.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.19"
+  },
+  "DEFINED": {
+    "type": "Pseudo-function",
+    "shortDescription": "Returns true if the given symbol is defined.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.8"
+  },
+  "DEFINEDMACRO": {
+    "type": "Pseudo-function",
+    "shortDescription": "Returns true if a macro with the given name is defined.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.9"
+  },
+  "DELMAC": "DELMACRO",
+  "DELMACRO": {
+    "type": "Control command",
+    "shortDescription": "Deletes a classic macro definition.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.20"
+  },
+  "DESTRUCTOR": {
+    "type": "Control command",
+    "shortDescription": "Exports a symbol and marks it as a module destructor.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.21"
+  },
+  "DWORD": {
+    "type": "Control command",
+    "shortDescription": "Emits one or more 32-bit (dword-sized) values into the current segment.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.22"
+  },
+  "ELSE": {
+    "type": "Control command",
+    "shortDescription": "Part of a conditional block, executed if the preceding .IF condition was false.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.23"
+  },
+  "ELSEIF": {
+    "type": "Control command",
+    "shortDescription": "Part of a conditional block, introduces a new condition if the preceding one was false.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.24"
+  },
+  "END": {
+    "type": "Control command",
+    "shortDescription": "Forcibly stops the assembly process.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.25"
+  },
+  "ENDENUM": {
+    "type": "Control command",
+    "shortDescription": "Ends an .ENUM block.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.26"
+  },
+  "ENDIF": {
+    "type": "Control command",
+    "shortDescription": "Ends a conditional assembly block started with .IF.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.27"
+  },
+  "ENDMAC": "ENDMACRO",
+  "ENDMACRO": {
+    "type": "Control command",
+    "shortDescription": "Ends a .MACRO definition.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.28"
+  },
+  "ENDPROC": {
+    "type": "Control command",
+    "shortDescription": "Ends a procedure scope started with .PROC.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.29"
+  },
+  "ENDREP": "ENDREPEAT",
+  "ENDREPEAT": {
+    "type": "Control command",
+    "shortDescription": "Ends a .REPEAT block.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.30"
+  },
+  "ENDSCOPE": {
+    "type": "Control command",
+    "shortDescription": "Ends a generic scope started with .SCOPE.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.31"
+  },
+  "ENDSTRUCT": {
+    "type": "Control command",
+    "shortDescription": "Ends a .STRUCT definition.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.32"
+  },
+  "ENDUNION": {
+    "type": "Control command",
+    "shortDescription": "Ends a .UNION definition.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.33"
+  },
+  "ENUM": {
+    "type": "Control command",
+    "shortDescription": "Starts a block of enumerated constants.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.34"
+  },
+  "ERROR": {
+    "type": "Control command",
+    "shortDescription": "Generates a user-defined error message and stops object file creation.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.35"
+  },
+  "EXITMAC": "EXITMACRO",
+  "EXITMACRO": {
+    "type": "Control command",
+    "shortDescription": "Exits the current macro expansion immediately.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.36"
+  },
+  "EXPORT": {
+    "type": "Control command",
+    "shortDescription": "Makes symbols accessible from other modules.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.37"
+  },
+  "EXPORTZP": {
+    "type": "Control command",
+    "shortDescription": "Makes zero-page symbols accessible from other modules.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.38"
+  },
+  "FARADDR": {
+    "type": "Control command",
+    "shortDescription": "Emits one or more 24-bit (far) address values into the current segment.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.39"
+  },
+  "FATAL": {
+    "type": "Control command",
+    "shortDescription": "Generates a user-defined error message and immediately terminates assembly.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.40"
+  },
+  "FEATURE": {
+    "type": "Control command",
+    "shortDescription": "Enables or disables a specific assembler compatibility feature.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.41"
+  },
+  "FILEOPT": {
+    "type": "Control command",
+    "shortDescription": "Inserts an option string (like author or comment) into the object file.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.42"
+  },
+  "FOPT": "FILEOPT",
+  "FORCEIMPORT": {
+    "type": "Control command",
+    "shortDescription": "Forces a symbol to be marked as an import, even if it's not used in the code.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.43"
+  },
+  "GLOBAL": {
+    "type": "Control command",
+    "shortDescription": "Declares symbols as global. Defined symbols are exported; undefined symbols are imported.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.44"
+  },
+  "GLOBALZP": {
+    "type": "Control command",
+    "shortDescription": "Declares zero-page symbols as global. Defined symbols are exported; undefined symbols are imported.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.45"
+  },
+  "HIBYTE": {
+    "type": "Pseudo-function",
+    "shortDescription": "Returns the high byte (bits 8-15) of its argument.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.10"
+  },
+  "HIBYTES": {
+    "type": "Control command",
+    "shortDescription": "Emits the high byte (bits 8-15) of one or more expressions.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.46"
+  },
+  "HIWORD": {
+    "type": "Pseudo-function",
+    "shortDescription": "Returns the high word (bits 16-31) of its argument.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.11"
+  },
+  "I16": {
+    "type": "Control command",
+    "shortDescription": "Sets the assembler to assume the 65816's index registers (X/Y) are in 16-bit mode. Does not emit any code.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.47"
+  },
+  "I8": {
+    "type": "Control command",
+    "shortDescription": "Sets the assembler to assume the 65816's index registers (X/Y) are in 8-bit mode. Does not emit any code.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.48"
+  },
+  "IDENT": {
+    "type": "Pseudo-function",
+    "shortDescription": "Converts a string argument into a valid identifier.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.12"
+  },
+  "IF": {
+    "type": "Control command",
+    "shortDescription": "Starts a conditional assembly block based on the result of a constant expression.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.49"
+  },
+  "IFBLANK": {
+    "type": "Control command",
+    "shortDescription": "Starts a conditional assembly block if the following token list is blank. Useful in macros.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.50"
+  },
+  "IFCONST": {
+    "type": "Control command",
+    "shortDescription": "Starts a conditional assembly block if the given expression is constant (resolvable at assembly time).",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.51"
+  },
+  "IFDEF": {
+    "type": "Control command",
+    "shortDescription": "Starts a conditional assembly block if the given symbol is defined.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.52"
+  },
+  "IFNBLANK": {
+    "type": "Control command",
+    "shortDescription": "Starts a conditional assembly block if the following token list is not blank. Useful in macros.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.53"
+  },
+  "IFNDEF": {
+    "type": "Control command",
+    "shortDescription": "Starts a conditional assembly block if the given symbol is not defined.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.54"
+  },
+  "IFNREF": {
+    "type": "Control command",
+    "shortDescription": "Starts a conditional assembly block if the given symbol has not been referenced.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.55"
+  },
+  "IFP02": {
+    "type": "Control command",
+    "shortDescription": "Starts a conditional assembly block if the current CPU is a standard 6502.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.56"
+  },
+  "IFP816": {
+    "type": "Control command",
+    "shortDescription": "Starts a conditional assembly block if the current CPU is a 65816.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.61"
+  },
+  "IFPC02": {
+    "type": "Control command",
+    "shortDescription": "Starts a conditional assembly block if the current CPU is a 65C02.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.62"
+  },
+  "IFREF": {
+    "type": "Control command",
+    "shortDescription": "Starts a conditional assembly block if the given symbol has been referenced.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.68"
+  },
+  "IMPORT": {
+    "type": "Control command",
+    "shortDescription": "Imports symbols from another module. Unused imports are discarded by the linker.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.70"
+  },
+  "IMPORTZP": {
+    "type": "Control command",
+    "shortDescription": "Imports zero-page symbols from another module. Unused imports are discarded.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.71"
+  },
+  "INCBIN": {
+    "type": "Control command",
+    "shortDescription": "Includes a binary file's contents directly into the current segment.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.72"
+  },
+  "INCLUDE": {
+    "type": "Control command",
+    "shortDescription": "Includes and assembles another source file.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.73"
+  },
+  "INTERRUPTOR": {
+    "type": "Control command",
+    "shortDescription": "Exports a symbol and marks it as an interrupt handler routine.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.74"
+  },
+  "ISIZE": {
+    "type": "Pseudo-variable",
+    "shortDescription": "Returns the current size of the Index registers (X/Y) in bits (8 or 16).",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss9.4"
+  },
+  "ISMNEM": "ISMNEMONIC",
+  "ISMNEMONIC": {
+    "type": "Pseudo-function",
+    "shortDescription": "Returns true if the given identifier is a valid instruction mnemonic for the current CPU.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.13"
+  },
+  "LEFT": {
+    "type": "Pseudo-function",
+    "shortDescription": "Extracts a specified number of tokens from the beginning of a token list.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.14"
+  },
+  "LIST": {
+    "type": "Control command",
+    "shortDescription": "Controls whether code is output to the listing file.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.75"
+  },
+  "LISTBYTES": {
+    "type": "Control command",
+    "shortDescription": "Sets the maximum number of bytes shown per line in the listing file.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.76"
+  },
+  "LITERAL": {
+    "type": "Control command",
+    "shortDescription": "Emits a string literally, ignoring any character map translations.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.77"
+  },
+  "LOBYTE": {
+    "type": "Pseudo-function",
+    "shortDescription": "Returns the low byte (bits 0-7) of its argument.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.15"
+  },
+  "LOBYTES": {
+    "type": "Control command",
+    "shortDescription": "Emits the low byte (bits 0-7) of one or more expressions.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.78"
+  },
+  "LOCAL": {
+    "type": "Control command",
+    "shortDescription": "Declares identifiers to be local to a macro expansion, preventing name clashes.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.79"
+  },
+  "LOCALCHAR": {
+    "type": "Control command",
+    "shortDescription": "Sets the character used to prefix cheap local labels (default is '@').",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.80"
+  },
+  "LOWORD": {
+    "type": "Pseudo-function",
+    "shortDescription": "Returns the low word (bits 0-15) of its argument.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.16"
+  },
+  "MAC": "MACRO",
+  "MACRO": {
+    "type": "Control command",
+    "shortDescription": "Starts a classic macro definition.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.82"
+  },
+  "MACPACK": {
+    "type": "Control command",
+    "shortDescription": "Includes a predefined package of macros.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.81"
+  },
+  "MATCH": {
+    "type": "Pseudo-function",
+    "shortDescription": "Compares two token lists for structural equality, ignoring values.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.17"
+  },
+  "MAX": {
+    "type": "Pseudo-function",
+    "shortDescription": "Returns the larger of two numeric values.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.18"
+  },
+  "MID": {
+    "type": "Pseudo-function",
+    "shortDescription": "Extracts a sub-list of tokens from a larger token list.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.19"
+  },
+  "MIN": {
+    "type": "Pseudo-function",
+    "shortDescription": "Returns the smaller of two numeric values.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.20"
+  },
+  "ORG": {
+    "type": "Control command",
+    "shortDescription": "Sets the program counter to an absolute address. Use .RELOC to return to relocatable code.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.83"
+  },
+  "OUT": {
+    "type": "Control command",
+    "shortDescription": "Outputs a message to the console during assembly without generating an error.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.84"
+  },
+  "P02": {
+    "type": "Control command",
+    "shortDescription": "Sets the active CPU to the standard NMOS 6502.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.85"
+  },
+  "P816": {
+    "type": "Control command",
+    "shortDescription": "Sets the active CPU to the WDC 65816.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.90"
+  },
+  "PC02": {
+    "type": "Control command",
+    "shortDescription": "Sets the active CPU to the CMOS 65C02.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.92"
+  },
+  "PAGELEN": "PAGELENGTH",
+  "PAGELENGTH": {
+    "type": "Control command",
+    "shortDescription": "Sets the page length (in lines) for the listing file.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.91"
+  },
+  "PARAMCOUNT": {
+    "type": "Pseudo-variable",
+    "shortDescription": "Returns the number of parameters passed to the current macro.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss9.5"
+  },
+  "POPCHARMAP": {
+    "type": "Control command",
+    "shortDescription": "Restores the previously saved character map from the stack.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.96"
+  },
+  "POPCPU": {
+    "type": "Control command",
+    "shortDescription": "Restores the previously saved CPU type from the stack.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.97"
+  },
+  "POPSEG": {
+    "type": "Control command",
+    "shortDescription": "Restores the previously saved segment from the stack.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.98"
+  },
+  "PROC": {
+    "type": "Control command",
+    "shortDescription": "Starts a named procedure scope, making enclosed labels and symbols local.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.99"
+  },
+  "PUSHCHARMAP": {
+    "type": "Control command",
+    "shortDescription": "Saves the current character map to a stack.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.102"
+  },
+  "PUSHCPU": {
+    "type": "Control command",
+    "shortDescription": "Saves the current CPU type to a stack.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.103"
+  },
+  "PUSHSEG": {
+    "type": "Control command",
+    "shortDescription": "Saves the current segment to a stack.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.104"
+  },
+  "REF": "REFERENCED",
+  "REFERENCED": {
+    "type": "Pseudo-function",
+    "shortDescription": "Returns true if the given symbol has been referenced.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.21"
+  },
+  "REFERTO": {
+    "type": "Control command",
+    "shortDescription": "Manually marks a symbol as referenced, for use with .IFREF.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.106"
+  },
+  "REFTO": "REFERTO",
+  "RELOC": {
+    "type": "Control command",
+    "shortDescription": "Switches back to relocatable assembly mode after an .ORG directive.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.107"
+  },
+  "REPEAT": {
+    "type": "Control command",
+    "shortDescription": "Repeats a block of code a specified number of times.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.108"
+  },
+  "RES": {
+    "type": "Control command",
+    "shortDescription": "Reserves a block of uninitialized bytes in the current segment.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.109"
+  },
+  "RIGHT": {
+    "type": "Pseudo-function",
+    "shortDescription": "Extracts a specified number of tokens from the end of a token list.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.22"
+  },
+  "RODATA": {
+    "type": "Control command",
+    "shortDescription": "Switches to the RODATA segment, typically used for read-only data.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.110"
+  },
+  "SCOPE": {
+    "type": "Control command",
+    "shortDescription": "Starts a generic scope, making enclosed labels and symbols local.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.111"
+  },
+  "SEGMENT": {
+    "type": "Control command",
+    "shortDescription": "Switches to a named segment.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.112"
+  },
+  "SET": {
+    "type": "Control command",
+    "shortDescription": "Assigns a re-definable value to a variable using infix syntax: <variable> .SET <value>",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.113"
+  },
+  "SETCPU": {
+    "type": "Control command",
+    "shortDescription": "Sets the active CPU instruction set.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.114"
+  },
+  "SIZEOF": {
+    "type": "Pseudo-function",
+    "shortDescription": "Returns the size in bytes of a struct, union, scope, or label.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.23"
+  },
+  "SMART": {
+    "type": "Control command",
+    "shortDescription": "Controls whether smart mode is active, which tracks 65816 register sizes.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.115"
+  },
+  "SPRINTF": {
+    "type": "Pseudo-function",
+    "shortDescription": "Formats a string using a C-style format specifier.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.24"
+  },
+  "STRAT": {
+    "type": "Pseudo-function",
+    "shortDescription": "Returns the character code at a specific index in a string.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.25"
+  },
+  "STRING": {
+    "type": "Pseudo-function",
+    "shortDescription": "Converts an identifier or numeric constant into a string.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.26"
+  },
+  "STRLEN": {
+    "type": "Pseudo-function",
+    "shortDescription": "Returns the length of a string constant.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.27"
+  },
+  "STRUCT": {
+    "type": "Control command",
+    "shortDescription": "Starts a structure definition.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.116"
+  },
+  "TAG": {
+    "type": "Control command",
+    "shortDescription": "Allocates space for a previously defined struct or union.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.117"
+  },
+  "TCOUNT": {
+    "type": "Pseudo-function",
+    "shortDescription": "Returns the number of tokens in a token list.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.28"
+  },
+  "TIME": {
+    "type": "Pseudo-variable",
+    "shortDescription": "Returns the current time as a POSIX timestamp (seconds since epoch).",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss9.6"
+  },
+  "UNDEF": "UNDEFINE",
+  "UNDEFINE": {
+    "type": "Control command",
+    "shortDescription": "Deletes a C-style macro previously created with .DEFINE.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.118"
+  },
+  "UNION": {
+    "type": "Control command",
+    "shortDescription": "Starts a union definition.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.119"
+  },
+  "VERSION": {
+    "type": "Pseudo-variable",
+    "shortDescription": "Returns the assembler version as a constant integer.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss9.7"
+  },
+  "WARNING": {
+    "type": "Control command",
+    "shortDescription": "Generates a user-defined warning message during assembly.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.120"
+  },
+  "WORD": {
+    "type": "Control command",
+    "shortDescription": "Emits one or more 16-bit (word-sized) values into the current segment.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.121"
+  },
+  "XMATCH": {
+    "type": "Pseudo-function",
+    "shortDescription": "Compares two token lists for exact equality, including values.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss10.29"
+  },
+  "ZEROPAGE": {
+    "type": "Control command",
+    "shortDescription": "Switches to the ZEROPAGE segment, used for zero-page data.",
+    "documentationUrl": "https://cc65.github.io/doc/ca65.html#ss11.122"
+  }
+}

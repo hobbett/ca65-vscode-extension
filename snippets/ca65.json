@@ -1,0 +1,66 @@
+{
+    ".proc": {
+        "prefix": ".proc",
+        "body": [
+            ".proc ${1:name}",
+            "\t$0",
+            "\trts",
+            ".endproc"
+        ],
+        "description": "Procedure block"
+    },
+    ".macro": {
+        "prefix": ".macro",
+        "body": [
+            ".macro ${1:name}",
+            "\t$0",
+            ".endmacro"
+        ],
+        "description": "Macro block"
+    },
+    ".scope": {
+        "prefix": ".scope",
+        "body": [
+            ".scope ${1:name}",
+            "\t$0",
+            ".endscope"
+        ],
+        "description": "Scope block"
+    },
+    ".if": {
+        "prefix": ".if",
+        "body": [
+            ".if ${1:condition}",
+            "\t$0",
+            ".endif"
+        ],
+        "description": "Conditional block"
+    },
+    ".struct": {
+        "prefix": ".struct",
+        "body": [
+            ".struct ${1:name}",
+            "\t$0",
+            ".endstruct"
+        ],
+        "description": "Struct block"
+    },
+    ".union": {
+        "prefix": ".union",
+        "body": [
+            ".union ${1:name}",
+            "\t$0",
+            ".endunion"
+        ],
+        "description": "Union block"
+    },
+    ".enum": {
+        "prefix": ".enum",
+        "body": [
+            ".enum ${1:name}",
+            "\t$0",
+            ".endenum"
+        ],
+        "description": "Enum block"
+    }
+}

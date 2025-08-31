@@ -1,0 +1,105 @@
+{
+    "scopeName": "source.ca65",
+    "name": "ca65 Assembly",
+    "patterns": [
+        {
+            "name": "comment.block.c.ca65",
+            "begin": "/\\*",
+            "end": "\\*/"
+        },
+        {
+            "name": "comment.line.semicolon.ca65",
+            "match": ";.*$"
+        },
+        {
+            "name": "string.quoted.double.ca65",
+            "begin": "\"",
+            "end": "\""
+        },
+        {
+            "name": "string.quoted.single.ca65",
+            "begin": "'",
+            "end": "'"
+        },
+        {
+            "name": "entity.name.label.ca65",
+            "match": "^\\s*([a-zA-Z_@.][a-zA-Z0-9_@.]*):"
+        },
+        {
+            "name": "meta.namespace.cpp",
+            "match": "\\b([a-zA-Z_@.][a-zA-Z0-9_@.]*)\\b(::)",
+            "captures": {
+                "1": { "name": "entity.name.namespace.ca65" },
+                "2": { "name": "punctuation.separator.namespace.ca65" }
+            }
+        },
+        {
+            "match": "(?i)^\\s*(\\.(?:proc|macro))\\s+([a-zA-Z_@.][a-zA-Z0-9_@.]*)",
+            "captures": {
+                "1": {
+                    "name": "keyword.control.directive.ca65"
+                },
+                "2": {
+                    "name": "entity.name.function.ca65"
+                }
+            }
+        },
+        {
+            "match": "(?i)^\\s*(\\.(?:struct|union))\\s+([a-zA-Z_@.][a-zA-Z0-9_@.]*)",
+            "captures": {
+                "1": {
+                    "name": "keyword.control.directive.ca65"
+                },
+                "2": {
+                    "name": "entity.name.type.struct.ca65"
+                }
+            }
+        },
+        {
+            "match": "(?i)^\\s*(\\.(?:enum))\\s+([a-zA-Z_@.][a-zA-Z0-9_@.]*)",
+            "captures": {
+                "1": {
+                    "name": "keyword.control.directive.ca65"
+                },
+                "2": {
+                    "name": "entity.name.type.enum.ca65"
+                }
+            }
+        },
+        {
+            "match": "(?i)^\\s*(\\.(?:scope))\\s+([a-zA-Z_@.][a-zA-Z0-9_@.]*)",
+            "captures": {
+                "1": {
+                    "name": "keyword.control.directive.ca65"
+                },
+                "2": {
+                    "name": "entity.name.namespace.ca65"
+                }
+            }
+        },
+        {
+            "name": "keyword.control.directive.ca65",
+            "match": "\\.[a-zA-Z_@.][a-zA-Z0-9_@.]*"
+        },
+        {
+            "name": "keyword.other.mnemonic.ca65",
+            "match": "(?i)\\b(jsr|adc|and|asl|bcc|bcs|beq|bit|bmi|bne|bpl|brk|bvc|bvs|clc|cld|cli|clv|cmp|cpx|cpy|dec|dex|dey|eor|inc|inx|iny|jmp|lda|ldx|ldy|lsr|nop|ora|pha|php|pla|plp|rol|ror|rti|rts|sbc|sec|sed|sei|sta|stx|sty|tax|tay|tsx|txa|txs|tya)\\b"
+        },
+        {
+            "name": "constant.numeric.immediate.ca65",
+            "match": "#(?:\\$[0-9a-fA-F]+|%[01]+|[0-9]+)"
+        },
+        {
+            "name": "constant.numeric.ca65",
+            "match": "(?:\\$[0-9a-fA-F]+|%[01]+|[0-9]+)\\b"
+        },
+        {
+            "name": "variable.language.register.ca65",
+            "match": "(?i)\\b(a|x|y|sp)\\b"
+        },
+        {
+            "name": "variable.other.symbol.ca65",
+            "match": "\\b[a-zA-Z_@.][a-zA-Z0-9_@.]*\\b"
+        }
+    ]
+}

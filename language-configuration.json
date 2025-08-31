@@ -1,0 +1,86 @@
+{
+  "comments": {
+    "blockComment": [
+      "/*",
+      "*/"
+    ],
+    "lineComment": {
+      "comment": ";",
+      "noIndent": false
+    }
+  },
+  "brackets": [
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"],
+    [".proc", ".endproc"], [".PROC", ".ENDPROC"],
+    [".scope", ".endscope"], [".SCOPE", ".ENDSCOPE"],
+    [".macro", ".endmacro"], [".macro", ".endmac"],
+    [".mac", ".endmacro"], [".mac", ".endmac"],
+    [".MACRO", ".ENDMACRO"], [".MACRO", ".ENDMAC"],
+    [".MAC", ".ENDMACRO"], [".MAC", ".ENDMAC"],
+
+    [".if", ".endif"], [".IF", ".ENDIF"],
+    [".ifdef", ".endif"], [".IFDEF", ".ENDIF"],
+    [".ifndef", ".endif"], [".IFNDEF", ".ENDIF"],
+    [".repeat", ".endrepeat"], [".REPEAT", ".ENDREPEAT"],
+    [".repeat", ".endrep"], [".REPEAT", ".ENDREP"],
+
+    [".struct", ".endstruct"], [".STRUCT", ".ENDSTRUCT"],
+    [".union", ".endunion"], [".UNION", ".ENDUNION"],
+    [".enum", ".endenum"], [".ENUM", ".ENDENUM"]
+  ],
+  "autoClosingPairs": [
+    {
+      "open": "(",
+      "close": ")"
+    },
+    {
+      "open": "[",
+      "close": "]"
+    },
+    {
+      "open": "{",
+      "close": "}"
+    },
+    {
+      "open": "\"",
+      "close": "\""
+    },
+    {
+      "open": "'",
+      "close": "'"
+    }
+  ],
+  "surroundingPairs": [
+    [
+      "(",
+      ")"
+    ],
+    [
+      "[",
+      "]"
+    ],
+    [
+      "{",
+      "}"
+    ],
+    [
+      "\"",
+      "\""
+    ],
+    [
+      "'",
+      "'"
+    ]
+  ],
+  "wordPattern": "(:[-+<>]+)|(@[a-zA-Z0-9_]+|[a-zA-Z_.][a-zA-Z0-9_]*)|(^\\s*:)",
+  "onEnterRules": [
+    {
+      "beforeText": "^\\s*[a-zA-Z_@.][a-zA-Z0-9_@.]*:\\s*$",
+      "action": {
+        "indent": "indent"
+      }
+    }
+  ]
+}

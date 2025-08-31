@@ -1,0 +1,79 @@
+{
+    "name": "ca65-vscode-extension",
+    "description": "CA65 Assembly language support for VS Code",
+    "author": "Quang Luong",
+    "license": "MIT",
+    "version": "1.0.0-beta.1",
+    "publisher": "hobbett",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/hobbett/ca65-vscode-extension.git"
+    },
+    "engines": {
+        "vscode": "^1.85.0"
+    },
+    "main": "./client/out/extension.js",
+    "activationEvents": [
+        "onLanguage:ca65"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "ca65",
+                "aliases": [
+                    "ca65 Assembly",
+                    "ca65"
+                ],
+                "extensions": [
+                    ".s",
+                    ".inc"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "ca65",
+                "scopeName": "source.ca65",
+                "path": "./syntaxes/ca65.tmLanguage.json"
+            }
+        ],
+        "configurationDefaults": {
+            "[ca65]": {
+                "editor.stickyScroll.defaultModel": "foldingProviderModel"
+            }
+        },
+        "commands": [
+            {
+                "command": "ca65.showReference",
+                "title": "ca65: Show Instruction Reference"
+            }
+        ],
+        "snippets": [
+            {
+                "language": "ca65",
+                "path": "./snippets/ca65.json"
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -b tsconfig.json",
+        "watch": "tsc -b tsconfig.json -w"
+    },
+    "devDependencies": {
+        "@types/vscode": "^1.85.0",
+        "@types/node": "^24.3.0",
+        "typescript": "^5.3.3"
+    },
+    "dependencies": {
+        "vscode-languageclient": "^9.0.1",
+        "vscode-languageserver": "^9.0.1",
+        "vscode-languageserver-protocol": "^3.17.5",
+        "vscode-languageserver-textdocument": "^1.0.1",
+        "vscode-languageserver-types": "^3.17.5",
+        "vscode-uri": "^3.1.0",
+        "@types/glob": "^9.0.0",
+        "glob": "^11.0.3"
+    }
+}

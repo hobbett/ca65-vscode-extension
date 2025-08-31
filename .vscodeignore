@@ -1,0 +1,37 @@
+# Ignore build output
+/client/out/
+/server/out/
+dist/
+**/*.vsix
+**/*.tsbuildinfo
+
+# Ignore source maps
+**/*.js.map
+
+# Ignore TypeScript source files (we only need the compiled JavaScript)
+client/src/
+server/src/
+!server/src/data/
+
+# Ignore development and testing files
+.vscode-test/
+.vscode/**
+!/.vscode/settings.json
+!/.vscode/tasks.json
+!/.vscode/launch.json
+!/.vscode/extensions.json
+.gitignore
+.gitattributes
+
+# Ignore common junk files
+.DS_Store
+Thumbs.db
+*.log
+
+# Aggressively clean up packaged dependencies
+**/node_modules/**/*.md
+**/node_modules/**/LICENSE*
+**/node_modules/**/test*
+**/node_modules/**/example*
+**/node_modules/**/.bin
+**/node_modules/**/*.d.ts
