@@ -36,6 +36,7 @@ This extension provides a full-featured language server to make writing `ca65` a
 
 ## Pre-requisites
 You must provide the `ca65` in your system's `PATH` in order for diagnostics to work.
+Otherwise, you may also set setting `ca65.executablePath` to the absolute path of your `ca65` executable.
 
 ## Installation
 
