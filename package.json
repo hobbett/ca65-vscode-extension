@@ -43,6 +43,15 @@
                 "editor.stickyScroll.defaultModel": "foldingProviderModel"
             }
         },
+        "configuration": {
+            "title": "ca65 Language Support",
+            "properties": {
+                "ca65.executablePath": {
+                    "type": "string",
+                    "description": "The full path to the ca65 compiler executable."
+                }
+            }
+        },
         "commands": [
             {
                 "command": "ca65.showReference",
@@ -73,7 +82,6 @@
         "vscode-languageserver-textdocument": "^1.0.1",
         "vscode-languageserver-types": "^3.17.5",
         "vscode-uri": "^3.1.0",
-        "@types/glob": "^9.0.0",
-        "glob": "^11.0.3"
+        "which": "^5.0.0"
     }
 }

@@ -39,6 +39,7 @@ import { initializeDocumentHighlightProvider } from './documentHighlightProvider
 import { initializeCompletionProvider } from './completionProvider';
 import { deleteCachedResolutions } from './symbolResolver';
 import { ExportsMap } from './exportsMap';
+import { Ca65Settings, documentSettings } from './settings';
 
 // --- Connection and Document Manager Setup ---
 const connection = createConnection(ProposedFeatures.all);
@@ -102,6 +103,27 @@ connection.onInitialize(async (params: InitializeParams) => {
         },
     };
 });
+
+// This event is fired when the user changes their settings
+connection.onDidChangeConfiguration(change => {
+    // Reset all cached document settings
+    documentSettings.clear();
+    // Re-validate all open documents with the new settings
+    documents.all().forEach(doc => triggerValidation(doc.uri, false));
+});
+
+// Helper function to get the setting for a document
+export function getDocumentSettings(resource: string): Thenable<Ca65Settings> {
+    let result = documentSettings.get(resource);
+    if (!result) {
+        result = connection.workspace.getConfiguration({
+            scopeUri: resource,
+            section: 'ca65'
+        });
+        documentSettings.set(resource, result);
+    }
+    return result;
+}
 
 // --- Central Document Update and Validation Logic ---
 async function updateAndValidate(document: TextDocument, debounce: boolean = true) {

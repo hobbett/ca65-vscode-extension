@@ -14,15 +14,19 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import * as path from 'path';
 import { execFile } from 'child_process';
 import { URI } from 'vscode-uri';
-import { includesGraph } from './server'; // Assumes these are exported from your server
+import { getDocumentSettings, includesGraph } from './server'; // Assumes these are exported from your server
 import * as fs from 'fs/promises';
+import * as os from "os";
 import { promisify } from 'util';
+import { Ca65Settings } from './settings';
+import which from "which";
 
 const execFileAsync = promisify(execFile);
 
 const validationTimers: Map<string, NodeJS.Timeout> = new Map();
 let connection: _Connection;
 let documents: TextDocuments<TextDocument>;
+let hasShownCa65NotFoundMessage = false;
 
 export function initializeDiagnostics(conn: _Connection, docs: TextDocuments<TextDocument>) {
     connection = conn;
@@ -30,13 +34,80 @@ export function initializeDiagnostics(conn: _Connection, docs: TextDocuments<Tex
 }
 
 /**
+ * Checks if a file exists and is executable.
+ */
+async function isExecutable(filePath: string): Promise<boolean> {
+    try {
+        await fs.access(filePath, fs.constants.X_OK);
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+/**
+ * Finds the ca65 executable by searching in order of priority.
+ * @returns The full path to the executable, or null if not found.
+ */
+export async function findCa65Executable(settings: Ca65Settings): Promise<string | null> {
+    // Check the user's explicit setting first.
+    if (settings.executablePath) {
+        let expandedPath = settings.executablePath;
+        if (expandedPath.startsWith("~")) {
+            expandedPath = path.join(os.homedir(), expandedPath.slice(1));
+        }
+        expandedPath = path.resolve(expandedPath); // resolve relative paths
+
+        if (await isExecutable(expandedPath)) {
+            console.log(`Found ca65 at settings path ${expandedPath}`);
+            return expandedPath;
+        }
+    }
+
+    // Try system path
+    try {
+        const pathInSystem = await which('ca65');
+        if (pathInSystem) {
+            console.log(`Found ca65 at which path ${pathInSystem}`);
+            return pathInSystem;
+        }
+    } catch (e) {
+        // Not found in PATH, continue to the next step.
+    }
+
+    // Try ~/.local/bin
+    const localBinPath = path.join(os.homedir(), '.local', 'bin', 'ca65');
+    if (await isExecutable(localBinPath)) {
+        console.log(`Found ca65 at ${localBinPath}`);
+        return localBinPath;
+    }
+
+    console.log(`Did not find ca65 executable`);
+    return null;
+}
+
+/**
  * Validates a document by running ca65 and sends diagnostics for all affected files.
  */
 export async function validateTextDocument(textDocument: TextDocument): Promise<void> {
+    const settings = await getDocumentSettings(textDocument.uri);
+    const ca65Path = await findCa65Executable(settings);
+    if (!ca65Path) {
+        if (!hasShownCa65NotFoundMessage) {
+            connection.window.showErrorMessage(
+                'ca65 executable not found. Please ensure ca65 is in your system PATH, or set '
+                + 'the "ca65.executablePath" in your settings.'
+            );
+            hasShownCa65NotFoundMessage = true;
+        }
+        connection.sendDiagnostics({ uri: textDocument.uri, diagnostics: [] });
+        return;
+    }
+
+    // Find the ca65 executable using the new search logic
     const filePath = URI.parse(textDocument.uri).fsPath;
     const baseDir = path.dirname(filePath);
     const diagnosticsByUri = new Map<string, Diagnostic[]>();
-    const ca65Path = 'ca65';
     const args = [filePath, '-o', process.platform === 'win32' ? 'NUL' : '/dev/null'];
 
     let stderr = '';

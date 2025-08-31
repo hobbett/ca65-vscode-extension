@@ -7,7 +7,7 @@
             "request": "launch",
             "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
             "outFiles": ["${workspaceFolder}/client/out/**/*.js"],
-            "preLaunchTask": "npm: compile"
+            "preLaunchTask": "compile"
         },
         {
             "name": "Attach to Server",
