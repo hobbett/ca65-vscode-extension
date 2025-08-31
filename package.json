@@ -3,7 +3,7 @@
     "description": "CA65 Assembly language support for VS Code",
     "author": "Quang Luong",
     "license": "MIT",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "publisher": "hobbett",
     "repository": {
         "type": "git",
