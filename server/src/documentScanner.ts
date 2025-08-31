@@ -311,9 +311,6 @@ export function scanDocument(document: TextDocument): SymbolTable {
 
             let targetIndex = nextAnonLabelIndex - 1 + offset
 
-            // Not a valid index.
-            if (targetIndex < 0 || targetIndex >= symbolTable.anonymousLabelLines.length) continue;
-
             if (!symbolTable.anonymousLabelReferences.has(targetIndex)) {
                 symbolTable.anonymousLabelReferences.set(targetIndex, []);
             }
