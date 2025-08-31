@@ -512,7 +512,7 @@ function makeIncludeEdit(
     document: TextDocument,
     includeUri: string
 ): TextEdit {
-    const includeLine = `.include "${includeUri}"\n`;
+    let includeLine = `.include "${includeUri}"\n`;
     const lines = document.getText().split(/\r?\n/);
 
     let top = 0;
@@ -530,7 +530,7 @@ function makeIncludeEdit(
 
     // Insert in order from the top of the block
     let insertAt = top;
-    while (insertAt < lines.length && lines[insertAt].trim().startsWith(".include")) {
+    while (insertAt < lines.length && lines[insertAt].trim().toLowerCase().startsWith(".include")) {
         const existingPath = lines[insertAt]
             .trim()
             .slice(8) // remove ".include"
@@ -543,6 +543,10 @@ function makeIncludeEdit(
         }
     }
 
+    // Add empty space if we're at the end of the .include block and the line has content.
+    const trimmedLine = lines[insertAt].trim().toLowerCase();
+    if (trimmedLine && !trimmedLine.startsWith(".include")) includeLine = includeLine + `\n`;
+
     return TextEdit.insert(Position.create(insertAt, 0), includeLine);
 }
 
@@ -550,7 +554,7 @@ function makeImportEdit(
     document: TextDocument,
     importSymbol: string
 ): TextEdit {
-    const importLine = `.import ${importSymbol}\n`;
+    let importLine = `.import ${importSymbol}\n`;
     const lines = document.getText().split(/\r?\n/);
 
     let top = 0;
@@ -570,7 +574,7 @@ function makeImportEdit(
     let foundInclude;
     while (
         top < lines.length
-        && lines[top].trim().startsWith('.include')
+        && lines[top].trim().toLowerCase().startsWith('.include')
     ) {
         foundInclude = true;
         top++;
@@ -579,7 +583,7 @@ function makeImportEdit(
 
     // Insert in order from the top of the block
     let insertAt = top;
-    while (insertAt < lines.length && lines[insertAt].trim().startsWith(".import")) {
+    while (insertAt < lines.length && lines[insertAt].trim().toLowerCase().startsWith(".import")) {
         const existingImportSymbol = lines[insertAt]
             .trim()
             .slice(7) // remove ".import"
@@ -590,6 +594,10 @@ function makeImportEdit(
             break;
         }
     }
+
+    // Add empty space if we're at the end of the .import block and the line has content.
+    const trimmedLine = lines[insertAt].trim().toLowerCase();
+    if (trimmedLine && !trimmedLine.startsWith(".import")) importLine = importLine + `\n`;
 
     return TextEdit.insert(Position.create(insertAt, 0), importLine);
 }
