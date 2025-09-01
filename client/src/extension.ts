@@ -35,11 +35,19 @@ export function activate(context: ExtensionContext) {
 		},
 	};
 
+	// Watch files that match the defined language extensions
+	const langContribution = context.extension.packageJSON.contributes.languages.find(
+        (lang: any) => lang.id === 'ca65'
+    );
+    const extensions = langContribution?.extensions?.map(
+        (ext: string) => ext.substring(1)
+    ) || ['s', 'asm', 'inc'];
+    const fileWatcherPattern = `**/*.{${extensions.join(',')}}`;
+
 	const clientOptions: LanguageClientOptions = {
 		documentSelector: [{ scheme: 'file', language: 'ca65' }],
 		synchronize: {
-			// Notify the server about file changes to '.s' and '.inc' files contained in the workspace
-			fileEvents: workspace.createFileSystemWatcher('**/*.{s,inc}')
+			fileEvents: workspace.createFileSystemWatcher(fileWatcherPattern)
 		},
 	};
 

@@ -53,6 +53,28 @@ export const exportsMap = new ExportsMap();
 connection.onInitialize(async (params: InitializeParams) => {
     loadAllData(connection);
 
+    let extensionsToScan: string[] = ['s', 'asm', 'inc']; // Default fallback
+    try {
+        // The server's code is in server/out, so go up two levels to the project root
+        const packageJsonPath = path.resolve(__dirname, '..', '..', 'package.json');
+        const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8');
+        const packageJson = JSON.parse(packageJsonContent);
+        
+        const langContribution = packageJson.contributes.languages.find(
+            (lang: any) => lang.id === 'ca65'
+        );
+        
+        if (langContribution && langContribution.extensions) {
+            // Remove the leading '.' from each extension
+            extensionsToScan = langContribution.extensions.map(
+                (ext: string) => ext.startsWith('.') ? ext.substring(1) : ext
+            );
+        }
+    } catch (e) {
+        connection.console.error(`Could not read extensions from package.json: ${e}`);
+    }
+    const globPattern = `**/*.{${extensionsToScan.join(',')}}`;
+
     // Initial scan of all symbol tables. This is required during initialization since
     // otherwise we will not know the correct includes graph and import/export info for correct
     // symbol resolution.
@@ -60,7 +82,7 @@ connection.onInitialize(async (params: InitializeParams) => {
         workspaceFolderUris = params.workspaceFolders.map(folder => folder.uri);
         for (const folder of params.workspaceFolders) {
             const folderPath = URI.parse(folder.uri).fsPath;
-            const files = await glob('**/*.{s,inc}', { cwd: folderPath, nodir: true });
+            const files = await glob(globPattern, { cwd: folderPath, nodir: true });
 
             const scannedDocs = new Set<TextDocument>();
             for (const file of files) {

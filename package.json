@@ -26,6 +26,7 @@
                 ],
                 "extensions": [
                     ".s",
+                    ".asm",
                     ".inc"
                 ],
                 "configuration": "./language-configuration.json"
@@ -48,7 +49,7 @@
             "properties": {
                 "ca65.executablePath": {
                     "type": "string",
-                    "description": "The full path to the ca65 compiler executable."
+                    "description": "The full path to the ca65 compiler executable. If this is not provided, the ca65 in the system PATH will be used"
                 },
                 "ca65.includeDirs": {
                     "type": "array",
@@ -65,6 +66,14 @@
                         "type": "string"
                     },
                     "default": ["bin"]
+                },
+                "ca65.autoIncludeExtensions": {
+                    "type": "array",
+                    "description": "A list of extensions for which we will provide auto-include candidates for.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [".inc"]
                 }
             }
         },

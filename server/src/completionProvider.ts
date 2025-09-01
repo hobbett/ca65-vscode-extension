@@ -95,6 +95,15 @@ function getCompletionItemDetail(entity: SymbolTableEntity): string | undefined 
     return undefined
 }
 
+function isAutoIncludable(uri: string, settings: Ca65Settings) {
+    if (settings.autoIncludeExtensions) {
+        for (const ext of settings.autoIncludeExtensions) {
+            if (uri.endsWith(ext)) return true;
+        }
+    }
+    return false;
+}
+
 function getCheapLocalLabelCompletions(
     document: TextDocument,
     position: Position,
@@ -303,9 +312,9 @@ async function getCompletionMacros(
         }
     }
 
-    // Include macros defined in .inc files we haven't included yet for autoinclusion.
+    // Find macros in files we can auto-include.
     for (const [otherUri, symbolTable] of allSymbolTables) {
-        if (!otherUri.endsWith('.inc')) continue;
+        if (!isAutoIncludable(otherUri, settings)) continue;
         if (seenUris.has(otherUri)) continue;
         
             for (const macro of symbolTable.getAllMacros()) {
@@ -418,13 +427,13 @@ async function getCompletionSymbols(
         }
     }
 
-    // Search the workspace for symbols that we can include or import
+    // Search the workspace for symbols that we can auto-include or import
     for (const [uri, symbolTable] of allSymbolTables) {
         if (includedUris.has(uri)) continue;
 
         let canonicalPath = await findCanonicalIncludePath(document.uri, uri, settings.includeDirs);
 
-        if (uri.endsWith(`.inc`)) {
+        if (isAutoIncludable(uri, settings)) {
             // Suggest including .inc files that define a symbol
             for (const entity of symbolTable.getAllDefinedEntities()) {
                 if (
@@ -450,7 +459,7 @@ async function getCompletionSymbols(
                 }
             }
 
-            // Suggest including .inc files that import symbols (i.e. headers)
+            // Suggest including files that import symbols (i.e. headers)
             for (const importEntity of symbolTable.imports) {
                 if (seenImports.has(importEntity.name)) continue;
                 if (visibleFqns.has(importEntity.getFullyQualifiedName())) continue;
