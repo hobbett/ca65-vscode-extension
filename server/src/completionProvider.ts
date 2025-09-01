@@ -10,13 +10,14 @@ import {
     Position,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { includesGraph, symbolTables } from './server';
+import { getDocumentSettings, includesGraph, symbolTables } from './server';
 import { directiveData, mnemonicData } from './dataManager';
 import { Export, Import, ImportKind, Macro, MacroKind, Scope, ScopeKind, Symbol, SymbolTable, SymbolTableEntity } from './symbolTable';
 import { findPreviousCheapLocalBoundary, CHEAP_LOCAL_BOUNDARY_REGEX } from './cheapLocalLabelUtils';
 import { IncludesGraph } from './includesGraph';
 import { getLSPSymbolKind, resolveExport, resolveImport } from './symbolResolver';
-import { getRelativePath } from './utils';
+import { findCanonicalIncludePath, getRelativePath } from './pathUtils';
+import { Ca65Settings } from './settings';
 
 const CHEAP_LOCAL_ITEM_PREFIX = 0;
 const VISIBLE_ITEM_PREFIX = 1;
@@ -158,11 +159,12 @@ function resolveDirectiveAlias(key: string, data: typeof directiveData): { type:
 }
 
 export function initializeCompletionProvider(connection: _Connection, documents: TextDocuments<TextDocument>) {
-    connection.onCompletion((params: TextDocumentPositionParams): CompletionItem[] => {
+    connection.onCompletion(async (params: TextDocumentPositionParams): Promise<CompletionItem[]> => {
         const document = documents.get(params.textDocument.uri);
         if (!document) {
             return [];
         }
+        const settings = await getDocumentSettings(document.uri);
         const position = params.position;
 
         const lineToCursor = document.getText({ start: { line: params.position.line, character: 0 }, end: params.position });
@@ -230,15 +232,15 @@ export function initializeCompletionProvider(connection: _Connection, documents:
             }
 
             // 3. Add Macros
-            completionItems.push(...getCompletionMacros(document, symbolTables));
+            completionItems.push(...await getCompletionMacros(document, symbolTables, settings));
             return completionItems;
         } else {
             // --- OPERAND CONTEXT: Suggest labels, constants, variables, and pseudo-functions/variables ---
             const completionItems: CompletionItem[] = [];
 
             // 1. Add Workspace Symbols (excluding command macros)
-            const allSymbols = getCompletionSymbols(
-                document, position, symbolTables, includesGraph
+            const allSymbols = await getCompletionSymbols(
+                document, position, symbolTables, includesGraph, settings
             );
             const operands = allSymbols.filter(item => !item.detail?.includes('macro'));
             completionItems.push(...operands);
@@ -269,10 +271,11 @@ export function initializeCompletionProvider(connection: _Connection, documents:
     });
 }
 
-export function getCompletionMacros(
+async function getCompletionMacros(
     document: TextDocument,
     allSymbolTables: Map<string, SymbolTable>,
-): CompletionItem[] {
+    settings: Ca65Settings
+): Promise<CompletionItem[]> {
     const completionItems: CompletionItem[] = [];
 
     const seenUris: Set<string> = new Set();
@@ -311,16 +314,16 @@ export function getCompletionMacros(
                 let label = macro.name;
                 let kind = getCompletionItemKind(getLSPSymbolKind(macro));
                 let detail = `${getCompletionItemDetail(macro)}`;
-                let relativeUri = getRelativePath(document.uri, otherUri);
+                let canonicalPath = await findCanonicalIncludePath(document.uri, otherUri, settings.includeDirs);
 
                 completionItems.push({
                     label,
                     kind,
                     detail,
                     labelDetails: {
-                        description: `include ${relativeUri}`
+                        description: `include ${canonicalPath}`
                     },
-                    additionalTextEdits: [makeIncludeEdit(document, relativeUri)],
+                    additionalTextEdits: [makeIncludeEdit(document, canonicalPath)],
                     sortText: AUTO_INCLUDE_ITEM_PREFIX + label
                 });
             }
@@ -329,12 +332,13 @@ export function getCompletionMacros(
     return Array.from(completionItems.values());
 }
 
-export function getCompletionSymbols(
+async function getCompletionSymbols(
     document: TextDocument,
     position: Position,
     allSymbolTables: Map<string, SymbolTable>,
-    includesGraph: IncludesGraph
-): CompletionItem[] {
+    includesGraph: IncludesGraph,
+    settings: Ca65Settings
+): Promise<CompletionItem[]> {
     const symbolTable = allSymbolTables.get(document.uri);
     if (!symbolTable) return [];
 
@@ -418,7 +422,7 @@ export function getCompletionSymbols(
     for (const [uri, symbolTable] of allSymbolTables) {
         if (includedUris.has(uri)) continue;
 
-        let relativeUri = getRelativePath(document.uri, uri);
+        let canonicalPath = await findCanonicalIncludePath(document.uri, uri, settings.includeDirs);
 
         if (uri.endsWith(`.inc`)) {
             // Suggest including .inc files that define a symbol
@@ -438,9 +442,9 @@ export function getCompletionSymbols(
                         kind,
                         detail,
                         labelDetails: {
-                            description: `include ${relativeUri}`
+                            description: `include ${canonicalPath}`
                         },
-                        additionalTextEdits: [makeIncludeEdit(document, relativeUri)],
+                        additionalTextEdits: [makeIncludeEdit(document, canonicalPath)],
                         sortText: AUTO_INCLUDE_ITEM_PREFIX + label
                     });
                 }
@@ -470,9 +474,9 @@ export function getCompletionSymbols(
                     kind,
                     detail,
                     labelDetails: {
-                        description: `include ${relativeUri}`
+                        description: `include ${canonicalPath}`
                     },
-                    additionalTextEdits: [makeIncludeEdit(document, relativeUri)],
+                    additionalTextEdits: [makeIncludeEdit(document, canonicalPath)],
                     sortText: AUTO_INCLUDE_ITEM_PREFIX + label
                 });
             }

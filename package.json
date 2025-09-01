@@ -49,6 +49,22 @@
                 "ca65.executablePath": {
                     "type": "string",
                     "description": "The full path to the ca65 compiler executable."
+                },
+                "ca65.includeDirs": {
+                    "type": "array",
+                    "description": "A list of workspace-relative paths to search for `.include` statements after the current file's directory. This should match any '-I' options of your ca65 build step.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": ["includes"]
+                },
+                "ca65.binIncludeDirs": {
+                    "type": "array",
+                    "description": "A list of workspace-relative paths to search for `.incbin` statements after the current file's directory. This should match any '--bin-include-dir' options of your ca65 build step.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": ["bin"]
                 }
             }
         },

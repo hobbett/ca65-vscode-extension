@@ -20,6 +20,7 @@ import * as os from "os";
 import { promisify } from 'util';
 import { Ca65Settings } from './settings';
 import which from "which";
+import { resolveWorkspaceRelativeDirs } from './pathUtils';
 
 const execFileAsync = promisify(execFile);
 
@@ -109,6 +110,16 @@ export async function validateTextDocument(textDocument: TextDocument): Promise<
     const baseDir = path.dirname(filePath);
     const diagnosticsByUri = new Map<string, Diagnostic[]>();
     const args = [filePath, '-o', process.platform === 'win32' ? 'NUL' : '/dev/null'];
+
+    for (const includeDir of resolveWorkspaceRelativeDirs(textDocument.uri, settings.includeDirs)) {
+        args.push('-I');
+        args.push(includeDir);
+    }
+
+    for (const binIncludeDir of resolveWorkspaceRelativeDirs(textDocument.uri, settings.binIncludeDirs)) {
+        args.push('--bin-include-dir');
+        args.push(binIncludeDir);
+    }
 
     let stderr = '';
     try {

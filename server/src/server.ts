@@ -44,6 +44,7 @@ import { Ca65Settings, documentSettings } from './settings';
 // --- Connection and Document Manager Setup ---
 const connection = createConnection(ProposedFeatures.all);
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
+export let workspaceFolderUris: string[] = [];
 export const symbolTables = new Map<string, SymbolTable>();
 export const includesGraph = new IncludesGraph();
 export const exportsMap = new ExportsMap();
@@ -56,6 +57,7 @@ connection.onInitialize(async (params: InitializeParams) => {
     // otherwise we will not know the correct includes graph and import/export info for correct
     // symbol resolution.
     if (params.workspaceFolders) {
+        workspaceFolderUris = params.workspaceFolders.map(folder => folder.uri);
         for (const folder of params.workspaceFolders) {
             const folderPath = URI.parse(folder.uri).fsPath;
             const files = await glob('**/*.{s,inc}', { cwd: folderPath, nodir: true });
