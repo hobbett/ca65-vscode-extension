@@ -1,6 +1,6 @@
 # ca65 Assembly for Visual Studio Code
 
-Provides basic LSP-backed language support for the **ca65** assembler.
+Provides basic LSP-backed language support for **ca65** assembly files.
 
 ## Features
 
@@ -35,8 +35,7 @@ This extension provides a full-featured language server to make writing `ca65` a
 * Anonymous structs are not handled to spec (the spec adds the members to an anonymous scope, but `ca65` actually adds them to the parent scope).
 
 ## Pre-requisites
-You must provide the `ca65` in your system's `PATH` in order for diagnostics to work.
-Otherwise, you may also set setting `ca65.executablePath` to the absolute path of your `ca65` executable.
+You must provide the `ca65` in your system's `PATH` or set setting `ca65.executablePath` to the absolute path of your `ca65` executable.
 
 ## Installation
 
@@ -44,6 +43,26 @@ You can install this extension from the [Visual Studio Marketplace](https://mark
 
 Alternatively, in VS Code, open the **Extensions** view (`Ctrl+Shift+X`), search for `ca65 Assembly`, and click **Install**.
 
+## File detection
+
+By default, `.s`, `.asm`, and `.inc` files are detected as `ca65` language.
+
+If you wish to add more extensions to be included, simply add them to `files.associations` in settings.
+
+e.g.
+```
+"files.associations": {
+    "*.incs": "ca65",
+    "*.a65": "ca65",
+    "*.mycoolextension": "ca65"
+}
+```
+
+## Other settings
+
+Paths for `.include` and `.incbin` (i.e. what you would pass into `-I` and `--bin-include-dir` during the assembly step) may be specified by `ca65.includeDirs` and `ca65.binIncludeDirs` settings.
+
+Please see the Settings gear icon in the installed extension to easily set this and other settings.
 
 ## License
 
