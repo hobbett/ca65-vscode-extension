@@ -100,14 +100,34 @@ function generateSymbolTableEntityMarkdown(entity: SymbolTableEntity, document: 
     let rangeEnd = entity.range ? entity.range.end.line : definitionStart;
 
     const commentLines: string[] = [];
+    let hasExport = false;
     for (let i = definitionStart - 1; i >= 0; i--) {
         const lineText = document.getText({
             start: { line: i, character: 0 },
             end: { line: i + 1, character: 0 }
         });
+
         const trimmedLine = lineText.trim();
-        if (trimmedLine === '' || !trimmedLine.startsWith(';')) break;
-        commentLines.unshift(lineText);
+        if (trimmedLine.startsWith(';')) {
+            commentLines.unshift(lineText);
+            continue;
+        }
+
+        // Add a single line of blankspace leniency after the definition or export statement
+        const lowercase = trimmedLine.toLowerCase();
+        if (i === definitionStart - 1) {
+            if (!trimmedLine) continue;
+
+            hasExport = lowercase.startsWith('.export') || lowercase.startsWith('.global');
+            if (hasExport) {
+                commentLines.unshift(lineText);
+                continue;
+            }
+        } else if (hasExport && i === definitionStart - 2 && !trimmedLine) {
+            continue;
+        }
+
+        break;
     }
 
     // Determine leading indentation of definition line
