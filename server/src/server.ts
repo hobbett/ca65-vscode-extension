@@ -44,57 +44,8 @@ export const exportsMap = new ExportsMap();
 
 // --- Server Initialization ---
 connection.onInitialize(async (params: InitializeParams) => {
-    loadAllData(connection);
-
-    let extensionsToScan: string[] = ['s', 'asm', 'inc']; // Default fallback
-    try {
-        // The server's code is in server/out, so go up two levels to the project root
-        const packageJsonPath = path.resolve(__dirname, '..', '..', 'package.json');
-        const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8');
-        const packageJson = JSON.parse(packageJsonContent);
-        
-        const langContribution = packageJson.contributes.languages.find(
-            (lang: any) => lang.id === 'ca65'
-        );
-        
-        if (langContribution && langContribution.extensions) {
-            // Remove the leading '.' from each extension
-            extensionsToScan = langContribution.extensions.map(
-                (ext: string) => ext.startsWith('.') ? ext.substring(1) : ext
-            );
-        }
-    } catch (e) {
-        connection.console.error(`Could not read extensions from package.json: ${e}`);
-    }
-    const globPattern = `**/*.{${extensionsToScan.join(',')}}`;
-
-    // Initial scan of all symbol tables. This is required during initialization since
-    // otherwise we will not know the correct includes graph and import/export info for correct
-    // symbol resolution.
     if (params.workspaceFolders) {
         workspaceFolderUris = params.workspaceFolders.map(folder => folder.uri);
-        for (const folder of params.workspaceFolders) {
-            const folderPath = URI.parse(folder.uri).fsPath;
-            const files = await glob(globPattern, { cwd: folderPath, nodir: true });
-
-            const scannedDocs = new Set<TextDocument>();
-            for (const file of files) {
-                try {
-                    const filePath = path.join(folderPath, file);
-                    const uri = URI.file(filePath).toString();
-                    const content = await fs.readFile(filePath, 'utf-8');
-                    const doc = TextDocument.create(uri, 'ca65', 0, content);
-                    scannedDocs.add(doc);
-                    
-                    const symbolTable = scanDocument(doc);
-                    symbolTables.set(uri, symbolTable);
-                    includesGraph.updateIncludes(uri, symbolTable.includedFiles);
-                    exportsMap.updateExports(uri, symbolTable.exports);
-                } catch (e) {
-                    connection.console.error(`Failed to scan ${file}: ${e}`);
-                }
-            }
-        }
     }
 
     return {
@@ -119,6 +70,60 @@ connection.onInitialize(async (params: InitializeParams) => {
             }
         },
     };
+});
+
+connection.onInitialized(async () => {
+    // Load data for mnemonic and directive hovers
+    loadAllData(connection);
+
+    // Initial scan of all symbol tables. This is required immediately after initialization since
+    // otherwise we will not know the correct includes graph and import/export info for correct
+    // symbol resolution.
+
+    let extensionsToScan: string[] = ['s', 'asm', 'inc']; // Default fallback
+    try {
+        // The server's code is in server/out, so go up two levels to the project root
+        const packageJsonPath = path.resolve(__dirname, '..', '..', 'package.json');
+        const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8');
+        const packageJson = JSON.parse(packageJsonContent);
+        
+        const langContribution = packageJson.contributes.languages.find(
+            (lang: any) => lang.id === 'ca65'
+        );
+        
+        if (langContribution && langContribution.extensions) {
+            // Remove the leading '.' from each extension
+            extensionsToScan = langContribution.extensions.map(
+                (ext: string) => ext.startsWith('.') ? ext.substring(1) : ext
+            );
+        }
+    } catch (e) {
+        connection.console.error(`Could not read extensions from package.json: ${e}`);
+    }
+    const globPattern = `**/*.{${extensionsToScan.join(',')}}`;
+
+    for (const folderUri of workspaceFolderUris) {
+        const folderPath = URI.parse(folderUri).fsPath;
+        const files = await glob(globPattern, { cwd: folderPath, nodir: true });
+
+        const scannedDocs = new Set<TextDocument>();
+        for (const file of files) {
+            try {
+                const filePath = path.join(folderPath, file);
+                const uri = URI.file(filePath).toString();
+                const content = await fs.readFile(filePath, 'utf-8');
+                const doc = TextDocument.create(uri, 'ca65', 0, content);
+                scannedDocs.add(doc);
+                
+                const symbolTable = await scanDocument(doc);
+                symbolTables.set(uri, symbolTable);
+                includesGraph.updateIncludes(uri, symbolTable.includedFiles);
+                exportsMap.updateExports(uri, symbolTable.exports);
+            } catch (e) {
+                connection.console.error(`Failed to scan ${file}: ${e}`);
+            }
+        }
+    }
 });
 
 // This event is fired when the user changes their settings
@@ -148,7 +153,7 @@ async function updateAndValidate(document: TextDocument, debounce: boolean = tru
         deleteCachedResolutions(uri);
     } 
 
-    const newSymbolTable = scanDocument(document);
+    const newSymbolTable = await scanDocument(document);
     symbolTables.set(document.uri, newSymbolTable);
     includesGraph.updateIncludes(document.uri, newSymbolTable.includedFiles);
     exportsMap.updateExports(document.uri, newSymbolTable.exports);

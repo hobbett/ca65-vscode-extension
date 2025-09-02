@@ -7,6 +7,8 @@ import { Export, ExportKind, ImportKind, Macro, MacroKind, ReferenceInfo, Scope,
 import { URI } from 'vscode-uri';
 import * as path from 'path';
 import { getAnonLabelRefOffsetFromPreviousLabel } from './anonymousLabelUtils';
+import { getDocumentSettings } from './server';
+import { resolveIncludePath } from './pathUtils';
 
 type LineItem = {
     text: string;
@@ -236,8 +238,9 @@ export function parseImportExportArgs(text: string, offset: number): ParsedImpor
     return groups;
 }
 
-export function scanDocument(document: TextDocument): SymbolTable {
+export async function scanDocument(document: TextDocument): Promise<SymbolTable> {
     const symbolTable = new SymbolTable(document.uri);
+    const settings = await getDocumentSettings(document.uri);
     let currentScope: Scope = symbolTable.getRootScope();
     let currentMacro: Macro | null;
 
@@ -491,7 +494,7 @@ export function scanDocument(document: TextDocument): SymbolTable {
         return true;
     }
 
-    const maybeHandleGenericLine = (line: number, text: string): boolean => {
+    const maybeHandleGenericLine = async (line: number, text: string): Promise<boolean> => {
         const { label, command, args } = parseLine(text);
         if (label) {
             if (label.text.startsWith('@')) {
@@ -710,12 +713,13 @@ export function scanDocument(document: TextDocument): SymbolTable {
                     const match = argsText.match(/^(['"])(.*)\1$/);
                     if (match) {
                         const filename = match[2];
-                        const currentDocPath = URI.parse(document.uri).fsPath;
-                        const currentDocDir = path.dirname(currentDocPath);
-                        const targetPath = path.resolve(currentDocDir, filename);
-                        const targetUri = URI.file(targetPath).toString();
-                        if (targetUri) {
-                            symbolTable.includedFiles.push(targetUri);
+                        const targetPath =
+                            await resolveIncludePath(document.uri, filename, settings.includeDirs);
+                        if (targetPath) {
+                            const targetUri = URI.file(targetPath).toString();
+                            if (targetUri) {
+                                symbolTable.includedFiles.push(targetUri);
+                            }
                         }
                         currentSegment = `segment from ${filename}`;
                     }
@@ -796,7 +800,7 @@ export function scanDocument(document: TextDocument): SymbolTable {
 
         if (maybeHandleConstantAssignment(lineNumber, text)) continue;
         if (maybeHandleVariableAssignment(lineNumber, text)) continue;
-        if (maybeHandleGenericLine(lineNumber, text)) continue;
+        if (await maybeHandleGenericLine(lineNumber, text)) continue;
         // Empty line?
     }
 
