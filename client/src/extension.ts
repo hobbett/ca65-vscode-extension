@@ -47,6 +47,7 @@ export function activate(context: ExtensionContext) {
 	const clientOptions: LanguageClientOptions = {
 		documentSelector: [{ scheme: 'file', language: 'ca65' }],
 		synchronize: {
+			configurationSection: 'ca65',
 			fileEvents: workspace.createFileSystemWatcher(fileWatcherPattern)
 		},
 	};

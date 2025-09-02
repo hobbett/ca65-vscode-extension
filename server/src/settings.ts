@@ -3,6 +3,8 @@ export interface Ca65Settings {
     includeDirs: string[];
     binIncludeDirs: string[];
     autoIncludeExtensions: string[];
+    anonymousLabelIndexHints: boolean;
+    importFromHints: boolean;
 }
 
 export const documentSettings: Map<string, Thenable<Ca65Settings>> = new Map();

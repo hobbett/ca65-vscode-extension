@@ -15,19 +15,12 @@ import { glob } from 'glob';
 
 import { loadAllData } from './dataManager';
 import { initializeDiagnostics, triggerValidation } from './diagnostics';
-// import { initializeHoverProvider } from './hoverProvider';
 import { initializeDocumentSymbolProvider } from './documentSymbolProvider';
 import { scanDocument } from './documentScanner';
-// import { initializeDefinitionProvider } from './definitionProvider';
-// import { initializeReferencesProvider } from './referencesProvider';
 import { initializeFoldingRangeProvider } from './foldingRangeProvider';
 import { initializeDocumentLinkProvider } from './documentLinkProvider';
-// import { initializeCallHierarchyProvider } from './callHierarchyProvider';
-// import { initializeRenameProvider } from './renameProvider';
 import { initializeWorkspaceSymbolProvider } from './workspaceSymbolProvider';
-// import { initializeCompletionProvider } from './completionProvider';
 import { initializeInlayHintProvider } from './inlayHintProvider';
-// import { initializeDocumentHighlightProvider } from './documentHighlightProvider';
 import { IncludesGraph } from './includesGraph';
 import { SymbolTable } from './symbolTable';
 import { initializeHoverProvider } from './hoverProvider';
@@ -130,10 +123,9 @@ connection.onInitialize(async (params: InitializeParams) => {
 
 // This event is fired when the user changes their settings
 connection.onDidChangeConfiguration(change => {
-    // Reset all cached document settings
     documentSettings.clear();
-    // Re-validate all open documents with the new settings
     documents.all().forEach(doc => triggerValidation(doc.uri, false));
+    connection.languages.inlayHint.refresh();
 });
 
 // Helper function to get the setting for a document

@@ -80,6 +80,16 @@
                     "default": [
                         ".inc"
                     ]
+                },
+                "ca65.anonymousLabelIndexHints": {
+                    "type": "boolean",
+                    "description": "Enables inlay hints for anonymous label indexes.",
+                    "default": "true"
+                },
+                "ca65.importFromHints": {
+                    "type": "boolean",
+                    "description": "Enables inlay hints for display the origin file of an import.",
+                    "default": "true"
                 }
             }
         },
