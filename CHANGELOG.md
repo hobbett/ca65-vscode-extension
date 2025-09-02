@@ -5,9 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.1] - 2025-09-02
+## [1.2.1] - 2025-09-02
+- Update changelog
+
+## [1.2.0] - 2025-09-02
 - Added settings for toggling inlay hints for anonymous labels and "import from" hints.
-- Fixed settings not being dynamically reloaded when changed. 
+- Fixed settings not being dynamically reloaded when changed.
 
 ## [1.1.0] - 2025-09-01
 - Removed hard-coding of .s and .inc files in favor of dynamically using ca65-associated extensions. .s, .inc, and .asm will still be the defaults.
