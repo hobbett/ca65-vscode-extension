@@ -16,7 +16,7 @@ import { Export, Import, ImportKind, Macro, MacroKind, Scope, ScopeKind, Symbol,
 import { findPreviousCheapLocalBoundary, CHEAP_LOCAL_BOUNDARY_REGEX } from './cheapLocalLabelUtils';
 import { IncludesGraph } from './includesGraph';
 import { getLSPSymbolKind, resolveExport, resolveImport } from './symbolResolver';
-import { findCanonicalIncludePath, getRelativePath } from './pathUtils';
+import { findCanonicalIncludePath, getRelativePath, getWorkspaceRelativePath } from './pathUtils';
 import { Ca65Settings } from './settings';
 
 const CHEAP_LOCAL_ITEM_PREFIX = 0;
@@ -512,7 +512,7 @@ async function getCompletionSymbols(
             const resolvedExport = resolveExport(exportEntity, allSymbolTables, includesGraph);
             if (!resolvedExport) continue;
 
-            let relativeUri = getRelativePath(document.uri, resolvedExport.uri);
+            let relativeUri = getWorkspaceRelativePath(resolvedExport.uri);
 
             let label = currentScope.findRelativeName(exportEntity);
             let kind = getCompletionItemKind(getLSPSymbolKind(resolvedExport));

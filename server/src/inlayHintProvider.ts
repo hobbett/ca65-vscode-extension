@@ -8,7 +8,7 @@ import {
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { getDocumentSettings, includesGraph, initializationGate, symbolTables } from './server';
 import { resolveImport } from './symbolResolver';
-import { getRelativePath } from './pathUtils';
+import { getRelativePath, getWorkspaceRelativePath } from './pathUtils';
 import { documentSettings } from './settings';
 
 export function initializeInlayHintProvider(connection: _Connection, documents: TextDocuments<TextDocument>) {
@@ -47,7 +47,7 @@ export function initializeInlayHintProvider(connection: _Connection, documents: 
                 const resolvedImport = resolveImport(importInfo.name, symbolTables, includesGraph);
                 if (!resolvedImport) continue;
     
-                const relativeUri = getRelativePath(document.uri, resolvedImport.uri);
+                const relativeUri = getWorkspaceRelativePath(resolvedImport.uri);
     
                 inlayHints.push({
                     label: ` from ${relativeUri}`,
