@@ -26,13 +26,13 @@ This extension provides a full-featured language server to make writing `ca65` a
     
 ## Known Limitations
 
-* Diagnostics are powered solely via `ca65`'s `stderr`, so they may be limited in detail, and they do not provide any diagnostics about the linking step.
-* The LSP is agnostic to the actual build command your project uses. This means all exported symbols may be imported by any other file in the workspace, and only the default path is used for `.include` statements.
+* Diagnostics are mainly powered via `ca65`'s `stderr`, so they may be limited in detail, and they do not provide any diagnostics about the linking step.
+* The LSP is agnostic to the actual build command your project uses, it assumes that all ca65 files are linked together for the purpose of import/export visibility.
 * Macro expansion is entirely opaque to the LSP, so symbols/scopes/syntax that are affected by macro expansion will not be visible to the LSP.
 * Symbols with multiple definitions will always resolve to the first definition in the same file.
 * Symbol refs will always resolve to the symbol even if a macro is declared with the same name after it's declaration.
 * Auto-completion in the operand will only suggest symbols -- it will not suggest `struct`s in a `.tag` or `.sizeof` command
-* Anonymous structs are not handled to spec (the spec adds the members to an anonymous scope, but `ca65` actually adds them to the parent scope).
+* Anonymous structs are currently not handled to spec (the spec adds the members to an anonymous scope, but `ca65` actually adds them to the parent scope).
 
 ## Pre-requisites
 You must provide the `ca65` in your system's `PATH` or set setting `ca65.executablePath` to the absolute path of your `ca65` executable.
