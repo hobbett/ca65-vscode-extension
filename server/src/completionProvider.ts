@@ -179,6 +179,17 @@ export function initializeCompletionProvider(connection: _Connection, documents:
         const position = params.position;
 
         const lineToCursor = document.getText({ start: { line: params.position.line, character: 0 }, end: params.position });
+
+        const anonLabelRefRegex = /:[-+<>]+$/;
+        if (anonLabelRefRegex.test(lineToCursor)) {
+            // Anonymous labels are considered to be words in language-configuration.json in order
+            // to show them in the document highlights. However, this also results in them being
+            // valid parts of autocompletion, which results in a nuissance autocompletion window
+            // during typing. Suppress this autocompletion if we're in the middle of typing an
+            // anonymous label refrence.
+            return [];
+        }
+
         const fullLineUntrimmed = document.getText(Range.create(params.position.line, 0, params.position.line + 1, 0));
         
         const wordMatch = lineToCursor.match(/[a-zA-Z0-9_.:@]*$/);
