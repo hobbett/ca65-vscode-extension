@@ -67,7 +67,6 @@ export function resolveLocalReference(
 ): SymbolTableEntity | undefined {
     const cachedResolution = cachedLocalResolutionsPerUri.get(ref.uri)?.get(ref);
     if (cachedResolution) {
-        console.log('Returning cached local resolution for ' + ref.name);
         return cachedResolution
     }
     let cachedResolutions: Map<ReferenceInfo, SymbolTableEntity> | undefined
@@ -161,7 +160,6 @@ export function resolveExport(
 ): Symbol | Scope | undefined {
     const cachedResolution = cachedExportResolutionsPerUri.get(exportEntity.uri)?.get(exportEntity);
     if (cachedResolution) {
-        console.log('Returning cached export for ' + exportEntity.name);
         return cachedResolution
     }
     let cachedResolutions: Map<Export, Symbol | Scope> | undefined

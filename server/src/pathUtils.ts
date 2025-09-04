@@ -3,6 +3,7 @@ import { fileURLToPath } from "url";
 import * as fs from 'fs/promises';
 import { URI } from 'vscode-uri';
 import { workspaceFolderUris } from './server';
+import { globSync } from 'glob';
 
 export function getRelativePath(fromUri: string, toUri: string): string {
     const fromPath = path.dirname(fileURLToPath(fromUri));
@@ -36,10 +37,21 @@ export function resolveWorkspaceRelativeDirs(
     relativeDirs: string[] | undefined
 ): string[] {
     const workspaceFolderUri = getWorkspaceFolderOfFile(currentFileUri);
-    if (!workspaceFolderUri) return [];
+    if (!workspaceFolderUri || !relativeDirs) return [];
 
     const workspaceRoot = URI.parse(workspaceFolderUri).fsPath;
-    return relativeDirs?.map(p => path.resolve(workspaceRoot, p)) ?? [];
+    const resolvedPaths: string[] = [];
+
+    for (const dirPattern of relativeDirs) {
+        const expandedDirs = globSync(dirPattern, {
+            cwd: workspaceRoot,
+            absolute: true,
+            nodir: false
+        });
+        resolvedPaths.push(...expandedDirs);
+    }
+    
+    return resolvedPaths;
 }
 
 export async function resolveIncludePath(

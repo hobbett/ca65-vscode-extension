@@ -63,12 +63,12 @@
                 },
                 "ca65.includeDirs": {
                     "type": "array",
-                    "description": "A list of workspace-relative paths to search for `.include` statements after the current file's directory. This should match any '-I' options of your ca65 build step.",
+                    "description": "A list of workspace-relative wildcard-compatible paths to search for `.include` statements after the current file's directory. This should match any '-I' options of your ca65 build step.",
                     "items": {
                         "type": "string"
                     },
                     "default": [
-                        "includes"
+                        "**/include"
                     ]
                 },
                 "ca65.binIncludeDirs": {
@@ -76,10 +76,7 @@
                     "description": "A list of workspace-relative paths to search for `.incbin` statements after the current file's directory. This should match any '--bin-include-dir' options of your ca65 build step.",
                     "items": {
                         "type": "string"
-                    },
-                    "default": [
-                        "bin"
-                    ]
+                    }
                 },
                 "ca65.autoIncludeExtensions": {
                     "type": "array",
