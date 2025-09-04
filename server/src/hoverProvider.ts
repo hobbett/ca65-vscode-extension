@@ -115,12 +115,10 @@ function generateSymbolTableEntityMarkdown(entity: SymbolTableEntity, document: 
             continue;
         }
 
-        // Add a single line of blankspace leniency after the definition or export statement
+        // Allow an .export between the doc comment and the symbol def
         const lowercase = trimmedLine.toLowerCase();
         if (i === definitionStart - 1) {
-            if (!trimmedLine) continue;
-
-            hasExport = lowercase.startsWith('.export') || lowercase.startsWith('.global');
+            hasExport = lowercase.startsWith('.export');
             if (hasExport) {
                 commentLines.unshift(lineText);
                 continue;
