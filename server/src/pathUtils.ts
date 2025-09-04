@@ -11,7 +11,17 @@ export function getRelativePath(fromUri: string, toUri: string): string {
     return path.relative(fromPath, toPath);
 }
 
-function getWorkspaceFolderOfFile(fileUri: string): string | undefined {
+export function getWorkspaceRelativePath(fileUri: string): string | null {
+    const workspaceFolderUri = getWorkspaceFolderOfFile(fileUri);
+    if (!workspaceFolderUri) return null;
+
+    const workspaceRoot = URI.parse(workspaceFolderUri).fsPath;
+    const filePath = URI.parse(fileUri).fsPath;
+
+    return path.relative(workspaceRoot, filePath);
+}
+
+export function getWorkspaceFolderOfFile(fileUri: string): string | undefined {
     // Find the workspace folder that this file is inside of.
     // Sort by length to find the most specific (deepest) match first in case of nested folders.
     const sortedFolders = workspaceFolderUris

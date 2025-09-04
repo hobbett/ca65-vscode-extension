@@ -7,7 +7,7 @@ import {
     Location,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { includesGraph, symbolTables } from './server';
+import { includesGraph, initializationGate, symbolTables } from './server';
 import { getAllReferenceLocationsForEntity, resolveReferenceAtPosition } from './symbolResolver';
 import { findAllCheapLocalLabelReferences } from './cheapLocalLabelUtils';
 
@@ -15,7 +15,9 @@ export function initializeRenameProvider(connection: _Connection, documents: Tex
     /**
      * Handles the "Rename Symbol" request.
      */
-    connection.onRenameRequest((params: RenameParams): WorkspaceEdit | null => {
+    connection.onRenameRequest(async (params: RenameParams): Promise<WorkspaceEdit | null> => {
+        await initializationGate.isInitialized;
+        
         const uri = params.textDocument.uri;
         const document = documents.get(uri);
         const symbolTable = symbolTables.get(uri);

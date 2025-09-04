@@ -10,7 +10,7 @@ import {
     Position,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { getDocumentSettings, includesGraph, symbolTables } from './server';
+import { getDocumentSettings, includesGraph, initializationGate, symbolTables } from './server';
 import { directiveData, mnemonicData } from './dataManager';
 import { Export, Import, ImportKind, Macro, MacroKind, Scope, ScopeKind, Symbol, SymbolTable, SymbolTableEntity } from './symbolTable';
 import { findPreviousCheapLocalBoundary, CHEAP_LOCAL_BOUNDARY_REGEX } from './cheapLocalLabelUtils';
@@ -169,6 +169,8 @@ function resolveDirectiveAlias(key: string, data: typeof directiveData): { type:
 
 export function initializeCompletionProvider(connection: _Connection, documents: TextDocuments<TextDocument>) {
     connection.onCompletion(async (params: TextDocumentPositionParams): Promise<CompletionItem[]> => {
+        await initializationGate.isInitialized;
+
         const document = documents.get(params.textDocument.uri);
         if (!document) {
             return [];

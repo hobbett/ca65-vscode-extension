@@ -5,13 +5,15 @@ import {
     DocumentHighlight,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { includesGraph, symbolTables } from './server';
+import { includesGraph, initializationGate, symbolTables } from './server';
 import { findAllCheapLocalLabelReferences } from './cheapLocalLabelUtils';
 import { findAllAnonLabelReferences } from './anonymousLabelUtils';
 import { getAllReferenceLocationsForEntity, resolveReferenceAtPosition } from './symbolResolver';
 
 export function initializeDocumentHighlightProvider(connection: _Connection, documents: TextDocuments<TextDocument>) {
-    connection.onDocumentHighlight((params: DocumentHighlightParams): DocumentHighlight[] | undefined => {
+    connection.onDocumentHighlight(async (params: DocumentHighlightParams): Promise<DocumentHighlight[] | undefined> => {
+        await initializationGate.isInitialized;
+        
         const document = documents.get(params.textDocument.uri);
         const symbolTable = symbolTables.get(params.textDocument.uri);
         if (!document || !symbolTable) {

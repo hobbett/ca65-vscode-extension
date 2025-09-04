@@ -6,13 +6,15 @@ import {
     InlayHintKind,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { getDocumentSettings, includesGraph, symbolTables } from './server';
+import { getDocumentSettings, includesGraph, initializationGate, symbolTables } from './server';
 import { resolveImport } from './symbolResolver';
 import { getRelativePath } from './pathUtils';
 import { documentSettings } from './settings';
 
 export function initializeInlayHintProvider(connection: _Connection, documents: TextDocuments<TextDocument>) {
     connection.languages.inlayHint.on(async (params: InlayHintParams): Promise<InlayHint[]> => {
+        await initializationGate.isInitialized;
+        
         const document = documents.get(params.textDocument.uri);
         if (!document) return [];
         const symbolTable = symbolTables.get(document.uri);

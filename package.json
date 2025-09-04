@@ -47,9 +47,19 @@
         "configuration": {
             "title": "ca65 Language Support",
             "properties": {
+                "ca65.enableCa65StdErrDiagnostics": {
+                    "type": "boolean",
+                    "description": "Enables diagnostics powered by ca65 stderr.",
+                    "default": "true"
+                },
                 "ca65.executablePath": {
                     "type": "string",
                     "description": "The full path to the ca65 compiler executable. If this is not provided, the ca65 in the system PATH will be used"
+                },
+                "ca65.enableUnusedSymbolDiagnostics": {
+                    "type": "boolean",
+                    "description": "Enables unused symbol diagnostics.",
+                    "default": "true"
                 },
                 "ca65.includeDirs": {
                     "type": "array",

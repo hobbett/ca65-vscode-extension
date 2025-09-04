@@ -3,14 +3,16 @@ import {
     WorkspaceSymbolParams,
     SymbolInformation,
 } from 'vscode-languageserver/node';
-import { symbolTables } from './server';
+import { initializationGate, symbolTables } from './server';
 import { getLSPSymbolKind } from './symbolResolver';
 
 export function initializeWorkspaceSymbolProvider(connection: _Connection) {
     /**
      * Handles the "Go to Symbol in Workspace" request (Ctrl+T).
      */
-    connection.onWorkspaceSymbol((params: WorkspaceSymbolParams): SymbolInformation[] => {
+    connection.onWorkspaceSymbol(async (params: WorkspaceSymbolParams): Promise<SymbolInformation[]> => {
+        await initializationGate.isInitialized;
+
         const query = params.query.toLowerCase();
         const lspSymbols: SymbolInformation[] = [];
 

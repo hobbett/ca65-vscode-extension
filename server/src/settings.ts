@@ -1,5 +1,7 @@
 export interface Ca65Settings {
+    enableCa65StdErrDiagnostics: boolean;
     executablePath: string;
+    enableUnusedSymbolDiagnostics: boolean;
     includeDirs: string[];
     binIncludeDirs: string[];
     autoIncludeExtensions: string[];

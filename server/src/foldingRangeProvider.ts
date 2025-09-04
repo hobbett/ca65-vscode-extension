@@ -4,10 +4,12 @@ import {
     FoldingRange,
     FoldingRangeKind
 } from 'vscode-languageserver/node';
-import { symbolTables } from './server';
+import { initializationGate, symbolTables } from './server';
 
 export function initializeFoldingRangeProvider(connection: _Connection) {
-    connection.onFoldingRanges((params: FoldingRangeParams): FoldingRange[] => {
+    connection.onFoldingRanges(async (params: FoldingRangeParams): Promise<FoldingRange[]> => {
+        await initializationGate.isInitialized;
+
         const symbolTable = symbolTables.get(params.textDocument.uri);
         if (!symbolTable) return [];
 

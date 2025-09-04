@@ -3,12 +3,14 @@ import {
     DocumentSymbolParams,
     DocumentSymbol,
 } from 'vscode-languageserver/node';
-import { symbolTables } from './server';
+import { initializationGate, symbolTables } from './server';
 import { Scope } from './symbolTable';
 import { getLSPSymbolKind } from './symbolResolver';
 
 export function initializeDocumentSymbolProvider(connection: _Connection) {
-    connection.onDocumentSymbol((params: DocumentSymbolParams): DocumentSymbol[] | undefined => {
+    connection.onDocumentSymbol(async (params: DocumentSymbolParams): Promise<DocumentSymbol[] | undefined> => {
+        await initializationGate.isInitialized;
+
         const symbolTable = symbolTables.get(params.textDocument.uri);
         if (!symbolTable) return undefined;
 

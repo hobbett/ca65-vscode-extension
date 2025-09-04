@@ -10,13 +10,15 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { getAnonymousLabelDefinition } from './anonymousLabelUtils';
 import { findCheapLocalLabelDefinition } from './cheapLocalLabelUtils';
 import { resolveReferenceAtPosition } from './symbolResolver';
-import { includesGraph, symbolTables } from './server';
+import { includesGraph, initializationGate, symbolTables } from './server';
 
 export function initializeDefinitionProvider(connection: _Connection, documents: TextDocuments<TextDocument>) {
     /**
      * Handles the "Go to Definition" request.
      */
-    connection.onDefinition((params: DefinitionParams): Definition | undefined => {
+    connection.onDefinition(async (params: DefinitionParams): Promise<Definition | undefined> => {
+        await initializationGate.isInitialized;
+
         const document = documents.get(params.textDocument.uri);
         if (!document) {
             return undefined;

@@ -9,18 +9,20 @@ import {
     Diagnostic,
     DiagnosticSeverity,
     Range,
+    DiagnosticTag,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import * as path from 'path';
 import { execFile } from 'child_process';
 import { URI } from 'vscode-uri';
-import { getDocumentSettings, includesGraph } from './server'; // Assumes these are exported from your server
+import { getDocumentSettings, includesGraph, initializationGate, symbolTables } from './server';
 import * as fs from 'fs/promises';
 import * as os from "os";
 import { promisify } from 'util';
 import { Ca65Settings } from './settings';
 import which from "which";
-import { resolveWorkspaceRelativeDirs } from './pathUtils';
+import { getWorkspaceFolderOfFile, getWorkspaceRelativePath, resolveWorkspaceRelativeDirs } from './pathUtils';
+import { isEntityUsed } from './symbolResolver';
 
 const execFileAsync = promisify(execFile);
 
@@ -32,6 +34,47 @@ let hasShownCa65NotFoundMessage = false;
 export function initializeDiagnostics(conn: _Connection, docs: TextDocuments<TextDocument>) {
     connection = conn;
     documents = docs;
+}
+
+/**
+ * Finds unused symbols in a given file.
+ * @param uri The URI of the document to check.
+ * @param checkedUnusedSymbols A set to track symbols that have already been checked to avoid duplicate work.
+ * @param existingDiags A list of existing diagnostics on the file to avoid creating conflicting hints.
+ * @returns An array of diagnostics for unused symbols.
+ */
+function findUnusedSymbolDiagnostics(uri: string, checkedUnusedSymbols: Set<string>, existingDiags: readonly Diagnostic[]): Diagnostic[] {
+    const lspDiagnostics: Diagnostic[] = [];
+    const symbolTable = symbolTables.get(uri);
+    if (!symbolTable) return [];
+
+    const definedEntities = symbolTable.getAllDefinedEntities();
+    
+    for (const entity of definedEntities) {
+        const fqn = entity.getFullyQualifiedName();
+        if (entity.name.startsWith('<anon') || checkedUnusedSymbols.has(fqn)) {
+            continue;
+        }
+        
+        // Do not mark a symbol as unused if its definition line already has a diagnostic.
+        const hasExistingDiagnostic = existingDiags.some(diag => diag.range.start.line === entity.definition.start.line);
+        if (hasExistingDiagnostic) {
+            continue;
+        }
+
+        if (!isEntityUsed(entity, symbolTables, includesGraph)) {
+            const diagnostic: Diagnostic = {
+                severity: DiagnosticSeverity.Hint,
+                range: entity.definition,
+                message: `Symbol '${entity.name}' is defined but never used.`,
+                source: 'ca65-lsp',
+                tags: [DiagnosticTag.Unnecessary]
+            };
+            lspDiagnostics.push(diagnostic);
+        }
+        checkedUnusedSymbols.add(fqn);
+    }
+    return lspDiagnostics;
 }
 
 /**
@@ -51,113 +94,86 @@ async function isExecutable(filePath: string): Promise<boolean> {
  * @returns The full path to the executable, or null if not found.
  */
 export async function findCa65Executable(settings: Ca65Settings): Promise<string | null> {
-    // Check the user's explicit setting first.
     if (settings.executablePath) {
-        let expandedPath = settings.executablePath;
-        if (expandedPath.startsWith("~")) {
-            expandedPath = path.join(os.homedir(), expandedPath.slice(1));
-        }
-        expandedPath = path.resolve(expandedPath); // resolve relative paths
-
+        let expandedPath = settings.executablePath.replace(/^~/, os.homedir());
+        expandedPath = path.resolve(expandedPath);
         if (await isExecutable(expandedPath)) {
-            console.log(`Found ca65 at settings path ${expandedPath}`);
             return expandedPath;
         }
     }
-
-    // Try system path
     try {
         const pathInSystem = await which('ca65');
-        if (pathInSystem) {
-            console.log(`Found ca65 at which path ${pathInSystem}`);
-            return pathInSystem;
-        }
-    } catch (e) {
-        // Not found in PATH, continue to the next step.
-    }
+        if (pathInSystem) return pathInSystem;
+    } catch (e) {}
 
-    // Try ~/.local/bin
-    const localBinPath = path.join(os.homedir(), '.local', 'bin', 'ca65');
-    if (await isExecutable(localBinPath)) {
-        console.log(`Found ca65 at ${localBinPath}`);
-        return localBinPath;
-    }
-
-    console.log(`Did not find ca65 executable`);
     return null;
 }
 
 /**
- * Validates a document by running ca65 and sends diagnostics for all affected files.
+ * Gathers only the ca65 compiler diagnostics for a single translation unit.
+ * @param textDocument The root document of the translation unit to validate.
+ * @returns A Map of URIs to their collected compiler diagnostics.
  */
-export async function validateTextDocument(textDocument: TextDocument): Promise<void> {
+async function getCompilerDiagnosticsForUnit(textDocument: TextDocument): Promise<Map<string, Diagnostic[]>> {
     const settings = await getDocumentSettings(textDocument.uri);
+    const diagnosticsByUri = new Map<string, Diagnostic[]>();
+    if (!settings.enableCa65StdErrDiagnostics) return diagnosticsByUri;
+
     const ca65Path = await findCa65Executable(settings);
     if (!ca65Path) {
         if (!hasShownCa65NotFoundMessage) {
-            connection.window.showErrorMessage(
-                'ca65 executable not found. Please ensure ca65 is in your system PATH, or set '
-                + 'the "ca65.executablePath" in your settings.'
-            );
+            connection.window.showErrorMessage('ca65 executable not found. Please set "ca65.executablePath" or ensure it is in your PATH.');
             hasShownCa65NotFoundMessage = true;
         }
-        connection.sendDiagnostics({ uri: textDocument.uri, diagnostics: [] });
-        return;
+        return diagnosticsByUri;
     }
 
-    // Find the ca65 executable using the new search logic
+    const workspaceFolderUri = getWorkspaceFolderOfFile(textDocument.uri);
+    const workspaceRoot = workspaceFolderUri ? URI.parse(workspaceFolderUri).fsPath : path.dirname(URI.parse(textDocument.uri).fsPath);
+    
     const filePath = URI.parse(textDocument.uri).fsPath;
-    const baseDir = path.dirname(filePath);
-    const diagnosticsByUri = new Map<string, Diagnostic[]>();
-    const args = [filePath, '-o', process.platform === 'win32' ? 'NUL' : '/dev/null'];
+    const relativeFilePath = path.relative(workspaceRoot, filePath);
+
+    const args = [relativeFilePath, '-o', process.platform === 'win32' ? 'NUL' : '/dev/null'];
 
     for (const includeDir of resolveWorkspaceRelativeDirs(textDocument.uri, settings.includeDirs)) {
-        args.push('-I');
-        args.push(includeDir);
+        args.push('-I', includeDir);
     }
-
     for (const binIncludeDir of resolveWorkspaceRelativeDirs(textDocument.uri, settings.binIncludeDirs)) {
-        args.push('--bin-include-dir');
-        args.push(binIncludeDir);
+        args.push('--bin-include-dir', binIncludeDir);
     }
 
     let stderr = '';
     try {
-        // --- Handle the SUCCESS case ---
-        // If ca65 succeeds, the result object contains stdout and stderr.
-        const result = await execFileAsync(ca65Path, args);
+        const result = await execFileAsync(ca65Path, args, { cwd: workspaceRoot });
         stderr = result.stderr;
     } catch (err: any) {
-        // --- Handle the ERROR case ---
-        // If ca65 fails, the error object contains stderr.
-        if (err && err.stderr) {
-            stderr = err.stderr;
-        }
+        if (err && err.stderr) stderr = err.stderr;
     }
 
     if (stderr) {
         const lines = stderr.split(/\r?\n/);
         const errorRegex = /^(.*?):(\d+):\s(Warning|Error):\s(.*)$/;
         const noteRegex = /^(.*?):(\d+):\sNote:\s(.*)$/;
-
+        
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             const errorMatch = line.match(errorRegex);
-
             if (errorMatch) {
-                const [_, fileName, lineNumberStr, severityStr, message] = errorMatch;
-                const errorFilePath = path.resolve(baseDir, fileName);
-                const errorFileUri = URI.file(errorFilePath).toString();
-                const lineNumber = parseInt(lineNumberStr, 10) - 1;
+                const [_, fileName, lineNumStr, severityStr, message] = errorMatch;
+                const errorFileUri = URI.file(path.resolve(workspaceRoot, fileName)).toString();
+                const lineNumber = parseInt(lineNumStr, 10) - 1;
 
                 if (!diagnosticsByUri.has(errorFileUri)) {
                     diagnosticsByUri.set(errorFileUri, []);
                 }
+                
+                let diagnosticMessage = message;
 
                 const diagnostic: Diagnostic = {
                     severity: severityStr === 'Error' ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning,
-                    range: Range.create(lineNumber, 0, lineNumber + 1, 0),
-                    message: message,
+                    range: Range.create(lineNumber, 0, lineNumber + 1, 0), // Default to full line
+                    message: diagnosticMessage,
                     source: 'ca65',
                     relatedInformation: []
                 };
@@ -165,91 +181,131 @@ export async function validateTextDocument(textDocument: TextDocument): Promise<
                 let errorDocument = documents.get(errorFileUri);
                 if (!errorDocument) {
                     try {
-                        const content = await fs.readFile(errorFilePath, 'utf-8');
-                        errorDocument = TextDocument.create(errorFileUri, 'ca65-asm', 0, content);
-                    } catch (e) {
-                        // File not found, etc. Continue with no document.
-                    }
+                        const content = await fs.readFile(URI.parse(errorFileUri).fsPath, 'utf-8');
+                        errorDocument = TextDocument.create(errorFileUri, 'ca65', 0, content);
+                    } catch {}
                 }
 
                 if (errorDocument) {
-                    const symbolMentionRegex = /[‘](.*?)[’]/;
-                    const symbolMentionMatch = message.match(symbolMentionRegex);
-
                     const lineText = errorDocument.getText(Range.create(lineNumber, 0, lineNumber + 1, 0));
-                    const lineWithoutComment = (lineText.includes(';') ? lineText.slice(lineText.indexOf(';')) : lineText).trimEnd()
+                    const lineWithoutComment = lineText.includes(';') ? lineText.substring(0, lineText.indexOf(';')) : lineText;
+                    const trimmedLine = lineWithoutComment.trim();
+                    const startChar = lineWithoutComment.indexOf(trimmedLine);
+                    const endChar = startChar + trimmedLine.length;
+                    diagnostic.range = Range.create(lineNumber, startChar, lineNumber, endChar);
 
-                    // Trim the diagnostic range to the actual content
-                    diagnostic.range = Range.create(
-                        lineNumber,
-                        lineWithoutComment.length - lineWithoutComment.trimStart().length,
-                        lineNumber,
-                        lineWithoutComment.length
-                    );
+                    const symbolMatch = message.match(/Symbol\s+‘(.*?)’/);
+                    const foundTokenMatch = message.match(/found\s+‘(.*?)’/);
 
-                    // Handle symbol mentions
-                    if (symbolMentionMatch) {
-                        const symbolName = symbolMentionMatch[1];
+                    if (symbolMatch) {
+                        const symbolName = symbolMatch[1];
                         const symbolIndex = lineText.indexOf(symbolName);
-
-                        // Trim the diagnostic to the mentioned symbol
                         if (symbolIndex !== -1) {
-                            diagnostic.range = Range.create(lineNumber, symbolIndex, lineNumber, symbolIndex + symbolName.length); 
+                            diagnostic.range = Range.create(lineNumber, symbolIndex, lineNumber, symbolIndex + symbolName.length);
+                        }
+                    } else if (foundTokenMatch) {
+                        const token = foundTokenMatch[1];
+                        const tokenIndex = lineText.indexOf(token);
+                        console.log(`tokenindex ${tokenIndex}`)
+                        if (tokenIndex !== -1) {
+                            diagnostic.range = Range.create(lineNumber, tokenIndex, lineNumber, tokenIndex + token.length);
                         }
                     }
                 }
 
-                // --- Handle "Note:" lines for related information ---
-                if (i + 1 < lines.length) {
-                    const noteMatch = lines[i + 1].match(noteRegex);
-                    if (noteMatch) {
-                        const [_, noteFileName, noteLineNumberStr, noteMessage] = noteMatch;
-                        const noteFilePath = path.resolve(baseDir, noteFileName);
-                        const noteFileUri = URI.file(noteFilePath).toString();
-                        diagnostic.relatedInformation = [{
-                            location: {
-                                uri: noteFileUri,
-                                range: Range.create(parseInt(noteLineNumberStr, 10) - 1, 0, parseInt(noteLineNumberStr, 10), 0)
-                            },
-                            message: noteMessage
-                        }];
-                        i++; // Skip the note line
-                    }
+                const noteMatch = (i + 1 < lines.length) ? lines[i + 1].match(noteRegex) : null;
+                if (noteMatch) {
+                    const [_, noteFileName, noteLineNumStr, noteMessage] = noteMatch;
+                    const noteFileUri = URI.file(path.resolve(workspaceRoot, noteFileName)).toString();
+                    const noteLineNumber = parseInt(noteLineNumStr, 10) - 1;
+                    diagnostic.relatedInformation?.push({
+                        location: {
+                            uri: noteFileUri,
+                            range: Range.create(noteLineNumber, 0, noteLineNumber + 1, 0)
+                        },
+                        message: noteMessage
+                    });
+                    i++;
                 }
-
                 diagnosticsByUri.get(errorFileUri)!.push(diagnostic);
             }
         }
     }
-
-    // --- Send all collected diagnostics, clearing old ones ---
-    const allAffectedUris = includesGraph.getTransitiveDependencies(textDocument.uri);
-    for (const uri of allAffectedUris) {
-        const diagnostics = diagnosticsByUri.get(uri) || [];
-        connection.sendDiagnostics({ uri, diagnostics });
-    }
+    return diagnosticsByUri;
 }
 
 /**
- * Triggers a debounced validation for a given document.
- * If the document is included by other files, we will only validate the root files that include it
- * and reuse that ca65 run's output.
+ * Triggers a debounced validation.
+ * @param uri The URI of the file that triggered the validation.
+ * @param debounce Whether to debounce the validation call.
+ * @param allFilesToUpdate A pre-calculated set of all files that need their diagnostics refreshed.
  */
-export function triggerValidation(uri: string, debounce: boolean = true) {
+export function triggerValidation(uri: string, debounce: boolean = true, allFilesToUpdate?: Set<string>) {
     if (validationTimers.has(uri)) {
         clearTimeout(validationTimers.get(uri)!);
     }
+
     validationTimers.set(uri, setTimeout(async () => {
         validationTimers.delete(uri);
-
-        for (const affectedUri of includesGraph.getIncludingRoots(uri)) {
-            let doc = documents.get(affectedUri);
-            if (!doc) {
-                const filePath = URI.parse(affectedUri).fsPath;
-                const content = await fs.readFile(filePath, 'utf-8');
-                doc = TextDocument.create(affectedUri, 'ca65', 0, content);
-            }
-            validateTextDocument(doc);
+        
+        const fullDiagnosticsByUri = new Map<string, Diagnostic[]>();
+        
+        // If a specific set of files wasn't provided, calculate it.
+        if (!allFilesToUpdate) {
+            allFilesToUpdate = new Set(includesGraph.getTranslationUnit(uri));
         }
+
+        const allRoots = Array.from(includesGraph.getIncludingRoots(uri));
+        const settings = await getDocumentSettings(uri);
+
+        if (allRoots.length === 0 && includesGraph.isTranslationUnitRoot(uri)) {
+            allRoots.push(uri);
+        }
+
+        // 1. Initialize full diagnostic list for all potentially affected files to ensure old ones are cleared.
+        for (const fileUri of allFilesToUpdate) {
+            fullDiagnosticsByUri.set(fileUri, []);
+        }
+        
+        // 2. Gather context-dependent compiler diagnostics from each root.
+        const seenCompilerDiags = new Set<string>();
+        for (const rootUri of allRoots) {
+            let doc = documents.get(rootUri);
+            if (!doc) {
+                try {
+                    const content = await fs.readFile(URI.parse(rootUri).fsPath, 'utf-8');
+                    doc = TextDocument.create(rootUri, 'ca65', 0, content);
+                } catch { continue; }
+            }
+            const compilerDiagnostics = await getCompilerDiagnosticsForUnit(doc);
+            for (const [fileUri, diags] of compilerDiagnostics.entries()) {
+                const existingDiags = fullDiagnosticsByUri.get(fileUri);
+                if (existingDiags) {
+                    for (const newDiag of diags) {
+                        const messageWithoutContext = newDiag.message.substring(newDiag.message.indexOf(']') + 2);
+                        const signature = `${newDiag.range.start.line}:${messageWithoutContext}`;
+                        if (!seenCompilerDiags.has(signature)) {
+                            existingDiags.push(newDiag);
+                            seenCompilerDiags.add(signature);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Gather context-independent "unused symbol" diagnostics ONCE.
+        if (settings.enableUnusedSymbolDiagnostics) {
+            const checkedUnusedSymbols = new Set<string>();
+            for (const fileUri of allFilesToUpdate) {
+                const unusedSymbolDiags = findUnusedSymbolDiagnostics(fileUri, checkedUnusedSymbols, fullDiagnosticsByUri.get(fileUri) || []);
+                fullDiagnosticsByUri.get(fileUri)?.push(...unusedSymbolDiags);
+            }
+        }
+
+        // 4. Send the final, consolidated diagnostics for every affected file.
+        for (const fileUri of allFilesToUpdate) {
+            connection.sendDiagnostics({ uri: fileUri, diagnostics: fullDiagnosticsByUri.get(fileUri) || [] });
+        }
+
     }, debounce ? 500 : 0));
 }

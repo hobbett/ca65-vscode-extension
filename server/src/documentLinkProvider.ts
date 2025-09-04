@@ -8,10 +8,12 @@ import {
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import { resolveIncludePath } from './pathUtils';
-import { getDocumentSettings } from './server';
+import { getDocumentSettings, initializationGate } from './server';
 
 export function initializeDocumentLinkProvider(connection: _Connection, documents: TextDocuments<TextDocument>) {
     connection.onDocumentLinks(async (params: DocumentLinkParams): Promise<DocumentLink[] | undefined> => {
+        await initializationGate.isInitialized;
+
         const document = documents.get(params.textDocument.uri);
         if (!document) {
             return undefined;

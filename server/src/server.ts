@@ -42,6 +42,17 @@ export const symbolTables = new Map<string, SymbolTable>();
 export const includesGraph = new IncludesGraph();
 export const exportsMap = new ExportsMap();
 
+export const initializationGate = (() => {
+    let resolve: () => void;
+    const promise = new Promise<void>(r => {
+        resolve = r;
+    });
+    return {
+        isInitialized: promise,
+        open: () => resolve(),
+    };
+})();
+
 // --- Server Initialization ---
 connection.onInitialize(async (params: InitializeParams) => {
     if (params.workspaceFolders) {
@@ -73,64 +84,61 @@ connection.onInitialize(async (params: InitializeParams) => {
 });
 
 connection.onInitialized(async () => {
-    // Load data for mnemonic and directive hovers
-    loadAllData(connection);
-
-    // Initial scan of all symbol tables. This is required immediately after initialization since
-    // otherwise we will not know the correct includes graph and import/export info for correct
-    // symbol resolution.
-
-    let extensionsToScan: string[] = ['s', 'asm', 'inc']; // Default fallback
     try {
-        // The server's code is in server/out, so go up two levels to the project root
-        const packageJsonPath = path.resolve(__dirname, '..', '..', 'package.json');
-        const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8');
-        const packageJson = JSON.parse(packageJsonContent);
-        
-        const langContribution = packageJson.contributes.languages.find(
-            (lang: any) => lang.id === 'ca65'
-        );
-        
-        if (langContribution && langContribution.extensions) {
-            // Remove the leading '.' from each extension
-            extensionsToScan = langContribution.extensions.map(
-                (ext: string) => ext.startsWith('.') ? ext.substring(1) : ext
+        // Load data for mnemonic and directive hovers
+        loadAllData(connection);
+
+        // Initial scan of all symbol tables. This is required immediately after initialization since
+        // otherwise we will not know the correct includes graph and import/export info for correct
+        // symbol resolution.
+
+        let extensionsToScan: string[] = ['s', 'asm', 'inc']; // Default fallback
+        try {
+            // The server's code is in server/out, so go up two levels to the project root
+            const packageJsonPath = path.resolve(__dirname, '..', '..', 'package.json');
+            const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8');
+            const packageJson = JSON.parse(packageJsonContent);
+            
+            const langContribution = packageJson.contributes.languages.find(
+                (lang: any) => lang.id === 'ca65'
             );
+            
+            if (langContribution && langContribution.extensions) {
+                // Remove the leading '.' from each extension
+                extensionsToScan = langContribution.extensions.map(
+                    (ext: string) => ext.startsWith('.') ? ext.substring(1) : ext
+                );
+            }
+        } catch (e) {
+            connection.console.error(`Could not read extensions from package.json: ${e}`);
         }
-    } catch (e) {
-        connection.console.error(`Could not read extensions from package.json: ${e}`);
-    }
-    const globPattern = `**/*.{${extensionsToScan.join(',')}}`;
+        const globPattern = `**/*.{${extensionsToScan.join(',')}}`;
 
-    for (const folderUri of workspaceFolderUris) {
-        const folderPath = URI.parse(folderUri).fsPath;
-        const files = await glob(globPattern, { cwd: folderPath, nodir: true });
+        for (const folderUri of workspaceFolderUris) {
+            const folderPath = URI.parse(folderUri).fsPath;
+            const files = await glob(globPattern, { cwd: folderPath, nodir: true });
 
-        const scannedDocs = new Set<TextDocument>();
-        for (const file of files) {
-            try {
-                const filePath = path.join(folderPath, file);
-                const uri = URI.file(filePath).toString();
-                const content = await fs.readFile(filePath, 'utf-8');
-                const doc = TextDocument.create(uri, 'ca65', 0, content);
-                scannedDocs.add(doc);
-                
-                const symbolTable = await scanDocument(doc);
-                symbolTables.set(uri, symbolTable);
-                includesGraph.updateIncludes(uri, symbolTable.includedFiles);
-                exportsMap.updateExports(uri, symbolTable.exports);
-            } catch (e) {
-                connection.console.error(`Failed to scan ${file}: ${e}`);
+            for (const file of files) {
+                try {
+                    const filePath = path.join(folderPath, file);
+                    const uri = URI.file(filePath).toString();
+                    const content = await fs.readFile(filePath, 'utf-8');
+                    const doc = TextDocument.create(uri, 'ca65', 0, content);
+                    
+                    const symbolTable = await scanDocument(doc);
+                    symbolTables.set(uri, symbolTable);
+                    includesGraph.updateIncludes(uri, symbolTable.includedFiles);
+                    exportsMap.updateExports(uri, symbolTable.exports);
+                } catch (e) {
+                    connection.console.error(`Failed to scan ${file}: ${e}`);
+                }
             }
         }
+    } catch (e) {
+        connection.console.error(`A critical error occurred during initialization: ${e}`);
     }
-});
 
-// This event is fired when the user changes their settings
-connection.onDidChangeConfiguration(change => {
-    documentSettings.clear();
-    documents.all().forEach(doc => triggerValidation(doc.uri, false));
-    connection.languages.inlayHint.refresh();
+    initializationGate.open();
 });
 
 // Helper function to get the setting for a document
@@ -148,9 +156,13 @@ export function getDocumentSettings(resource: string): Thenable<Ca65Settings> {
 
 // --- Central Document Update and Validation Logic ---
 async function updateAndValidate(document: TextDocument, debounce: boolean = true) {
+    await initializationGate.isInitialized;
+
+    const allAffectedUris: Set<string> = new Set();
+
     // Delete cached resolutions of the translation unit both before and after the change
     for (const uri of includesGraph.getTranslationUnit(document.uri)) {
-        deleteCachedResolutions(uri);
+        allAffectedUris.add(uri);
     } 
 
     const newSymbolTable = await scanDocument(document);
@@ -159,10 +171,14 @@ async function updateAndValidate(document: TextDocument, debounce: boolean = tru
     exportsMap.updateExports(document.uri, newSymbolTable.exports);
 
     for (const uri of includesGraph.getTranslationUnit(document.uri)) {
+        allAffectedUris.add(uri);
+    }
+
+    for (const uri of allAffectedUris) {
         deleteCachedResolutions(uri);
     }
 
-    triggerValidation(document.uri, debounce);
+    triggerValidation(document.uri, debounce, allAffectedUris);
 }
 
 // --- Event Listeners ---
@@ -175,6 +191,8 @@ documents.onDidOpen(async (change) => {
 });
 
 connection.onDidChangeWatchedFiles(async (params: DidChangeWatchedFilesParams) => {
+    await initializationGate.isInitialized;
+
     connection.console.log('Watched file change detected. Re-scanning affected files.');
     for (const event of params.changes) {
         const openDoc = documents.get(event.uri);

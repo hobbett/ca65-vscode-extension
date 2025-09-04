@@ -275,3 +275,25 @@ export function getFullyQualifiedName(item: SymbolTableEntity): string {
 
     return nameParts.join('::');
 }
+
+export function isEntityUsed(
+    entity: SymbolTableEntity,
+    allSymbolTables: Map<string, SymbolTable>,
+    includesGraph: IncludesGraph
+): boolean {
+    let refCount: number = 0;
+    for (const translationUnitUri of includesGraph.getTranslationUnit(entity.uri)) {
+        const symbolTable = allSymbolTables.get(translationUnitUri);
+        if (!symbolTable) continue;
+
+        for (const ref of symbolTable.getAllReferences()) {
+            if (ref.name !== entity.name) continue;
+            if (resolveLocalReference(ref, allSymbolTables, includesGraph) === entity) {
+                refCount++;
+                // Check if the ref count is more than 1 (the definition).
+                if (refCount > 1) return true;
+            }
+        }
+    }
+    return false;
+}

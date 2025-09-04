@@ -14,10 +14,12 @@ import * as fs from 'fs/promises';
 import { mnemonicData, directiveData } from './dataManager';
 import { Macro, SymbolTableEntity } from './symbolTable';
 import { getLSPSymbolKind, resolveReference } from './symbolResolver';
-import { includesGraph, symbolTables } from './server';
+import { includesGraph, initializationGate, symbolTables } from './server';
 
 export function initializeHoverProvider(connection: _Connection, documents: TextDocuments<TextDocument>) {
     connection.onHover(async ({ textDocument, position }: TextDocumentPositionParams): Promise<Hover | undefined> => {
+        await initializationGate.isInitialized;
+        
         const document = documents.get(textDocument.uri);
         if (!document) return undefined;
         const symbolTable = symbolTables.get(textDocument.uri);

@@ -74,11 +74,23 @@ export class IncludesGraph {
     }
 
     public *getTranslationUnit(uri: string): Generator<string> {
+        const visitedUris = new Set<string>();
         for (const root of this.getIncludingRoots(uri)) {
-            yield* this.getTransitiveDependencies(root);
+            for (const dependencyUri of this.getTransitiveDependencies(root)) {
+                if (!visitedUris.has(dependencyUri)) {
+                    visitedUris.add(dependencyUri);
+                    yield dependencyUri;
+                }
+            }
         }
     }
-    
+
+    public isTranslationUnitRoot(uri: string): boolean {
+        const node = this.nodes.get(uri);
+        if (!node) return false;
+        return node.includedBy.size === 0;
+    }
+
     private *getTransitiveLinks(
         uri: string,
         direction: 'includes' | 'includedBy'

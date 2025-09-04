@@ -9,7 +9,7 @@ import {
     CallHierarchyOutgoingCall,
 } from 'vscode-languageserver/node';
 import { Range, TextDocument } from 'vscode-languageserver-textdocument';
-import { includesGraph, symbolTables } from './server';
+import { includesGraph, initializationGate, symbolTables } from './server';
 import { getAllReferencesForEntity, resolveReferenceAtPosition, getLSPSymbolKind, resolveReference } from './symbolResolver';
 import { Scope, ScopeKind, Symbol, SymbolTableEntity } from './symbolTable';
 
@@ -21,6 +21,8 @@ export function initializeCallHierarchyProvider(
         async (
             params: CallHierarchyPrepareParams
         ): Promise<CallHierarchyItem[] | null> => {
+            await initializationGate.isInitialized;
+
             const document = documents.get(params.textDocument.uri);
             if (!document) {
                 return null;
@@ -56,6 +58,8 @@ export function initializeCallHierarchyProvider(
         async (
             params: CallHierarchyIncomingCallsParams
         ): Promise<CallHierarchyIncomingCall[] | null> => {
+            await initializationGate.isInitialized;
+
             if (!params.item.data) return null;
             const {uri, name, scopeStack} = params.item.data;
             if (!uri || !name || !scopeStack ) return null;
@@ -113,6 +117,8 @@ export function initializeCallHierarchyProvider(
         async (
             params: CallHierarchyOutgoingCallsParams
         ): Promise<CallHierarchyOutgoingCall[] | null> => {
+            await initializationGate.isInitialized;
+
             if (!params.item.data) return null;
             const {uri, name, scopeStack} = params.item.data;
             if (!uri || !name || !scopeStack ) return null;
