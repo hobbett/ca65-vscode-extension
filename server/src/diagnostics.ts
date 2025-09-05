@@ -15,7 +15,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import * as path from 'path';
 import { execFile } from 'child_process';
 import { URI } from 'vscode-uri';
-import { getDocumentSettings, includesGraph, initializationGate, symbolTables } from './server';
+import { getDocumentSettings, includesGraph, initializationGate, performanceMonitor, symbolTables } from './server';
 import * as fs from 'fs/promises';
 import * as os from "os";
 import { promisify } from 'util';
@@ -44,9 +44,13 @@ export function initializeDiagnostics(conn: _Connection, docs: TextDocuments<Tex
  * @returns An array of diagnostics for unused symbols.
  */
 function findUnusedSymbolDiagnostics(uri: string, checkedUnusedSymbols: Set<string>, existingDiags: readonly Diagnostic[]): Diagnostic[] {
+    performanceMonitor.start("findUnusedSymbolDiagnostics");
     const lspDiagnostics: Diagnostic[] = [];
     const symbolTable = symbolTables.get(uri);
-    if (!symbolTable) return [];
+    if (!symbolTable) {
+        performanceMonitor.stop("findUnusedSymbolDiagnostics");
+        return [];
+    }
 
     const definedEntities = symbolTable.getAllDefinedEntities();
     
@@ -74,6 +78,7 @@ function findUnusedSymbolDiagnostics(uri: string, checkedUnusedSymbols: Set<stri
         }
         checkedUnusedSymbols.add(fqn);
     }
+    performanceMonitor.stop("findUnusedSymbolDiagnostics");
     return lspDiagnostics;
 }
 
@@ -115,6 +120,7 @@ export async function findCa65Executable(settings: Ca65Settings): Promise<string
  * @returns A Map of URIs to their collected compiler diagnostics.
  */
 async function getCompilerDiagnosticsForUnit(textDocument: TextDocument): Promise<Map<string, Diagnostic[]>> {
+    performanceMonitor.start("getCompilerDiagnosticsForUnit");
     const settings = await getDocumentSettings(textDocument.uri);
     const diagnosticsByUri = new Map<string, Diagnostic[]>();
     if (!settings.enableCa65StdErrDiagnostics) return diagnosticsByUri;
@@ -125,6 +131,7 @@ async function getCompilerDiagnosticsForUnit(textDocument: TextDocument): Promis
             connection.window.showErrorMessage('ca65 executable not found. Please set "ca65.executablePath" or ensure it is in your PATH.');
             hasShownCa65NotFoundMessage = true;
         }
+        performanceMonitor.stop("getCompilerDiagnosticsForUnit");
         return diagnosticsByUri;
     }
 
@@ -231,6 +238,7 @@ async function getCompilerDiagnosticsForUnit(textDocument: TextDocument): Promis
             }
         }
     }
+    performanceMonitor.stop("getCompilerDiagnosticsForUnit");
     return diagnosticsByUri;
 }
 

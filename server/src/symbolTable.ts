@@ -2,6 +2,7 @@ import {
     Position,
     Range,
 } from 'vscode-languageserver-types';
+import { performanceMonitor } from './server';
 
 export class SymbolTableEntity {
     range: Range;
@@ -457,6 +458,7 @@ export class SymbolTable {
     }
 
     getReferenceAtPosition(position: Position): ReferenceInfo | null {
+        performanceMonitor.start('getReferenceAtPosition');
         // TODO: make this more performant, possibly with binary search.
         for (const reference of this.references) {
             // Range includes the character after a reference. This is to allow the cursor at the
@@ -469,9 +471,11 @@ export class SymbolTable {
                     reference.location
                 )
             ) {
+                performanceMonitor.stop('getReferenceAtPosition');
                 return reference
             }
         }
+        performanceMonitor.stop('getReferenceAtPosition');
         return null
     }
 

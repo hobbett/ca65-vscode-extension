@@ -5,7 +5,7 @@ import {
 } from 'vscode-languageserver-types';
 import { SymbolTable, Symbol, SymbolTableEntity, Macro, Scope, ScopeKind, MacroKind, SymbolKind, ReferenceInfo, Export, Import } from './symbolTable';
 import { IncludesGraph } from './includesGraph';
-import { exportsMap, symbolTables } from './server';
+import { exportsMap, performanceMonitor, symbolTables } from './server';
 
 const cachedLocalResolutionsPerUri: Map<string, Map<ReferenceInfo, SymbolTableEntity>> = new Map();
 const cachedExportResolutionsPerUri: Map<string, Map<Export, Symbol | Scope>> = new Map();
@@ -21,12 +21,18 @@ export function resolveReferenceAtPosition(
     allSymbolTables: Map<string, SymbolTable>,
     includesGraph: IncludesGraph
 ): SymbolTableEntity | undefined {
+
     const symbolTable = allSymbolTables.get(uri);
-    if (!symbolTable) return undefined;
+    if (!symbolTable) {
+        return undefined;
+    }
 
     const ref = symbolTable.getReferenceAtPosition(position);
-    if (!ref) return undefined;
-    return resolveReference(ref, allSymbolTables, includesGraph);
+    if (!ref) {
+        return undefined;
+    }
+    const resolved = resolveReference(ref, allSymbolTables, includesGraph);
+    return resolved;
 }
 
 /**
@@ -42,6 +48,7 @@ export function resolveReference(
     allSymbolTables: Map<string, SymbolTable>,
     includesGraph: IncludesGraph, // Assuming your include graph type
 ): SymbolTableEntity | undefined {
+    performanceMonitor.start('resolveReference');
 
     const localReference = resolveLocalReference(ref, allSymbolTables, includesGraph);
 
@@ -50,10 +57,12 @@ export function resolveReference(
     // be looking at a library header.
     if (localReference instanceof Import) {
         const resolvedImport = resolveImport(localReference.name, symbolTables, includesGraph);
+        performanceMonitor.stop('resolveReference');
         return resolvedImport ? resolvedImport : localReference; 
     }
 
     // Nothing doing.
+    performanceMonitor.stop('resolveReference');
     return localReference;
 }
 
@@ -69,6 +78,8 @@ export function resolveLocalReference(
     if (cachedResolution) {
         return cachedResolution
     }
+    performanceMonitor.start('resolveLocalReference_uncached');
+
     let cachedResolutions: Map<ReferenceInfo, SymbolTableEntity> | undefined
         = cachedLocalResolutionsPerUri.get(ref.uri);
     if (!cachedResolutions) {
@@ -85,9 +96,11 @@ export function resolveLocalReference(
             const macro = symbolTable.getMacro(ref.name);
             if (macro) {
                 cachedResolutions.set(ref, macro);
+                performanceMonitor.stop('resolveLocalReference_uncached');
                 return macro;
             }
         }
+        performanceMonitor.stop('resolveLocalReference_uncached');
         return undefined; // No preceding macro found
     }
 
@@ -115,15 +128,18 @@ export function resolveLocalReference(
                 break;
             }
             cachedResolutions.set(ref, localEntity);
+            performanceMonitor.stop('resolveLocalReference_uncached');
             return localEntity;
         }
     }
 
     if (importEntity) {
         cachedResolutions.set(ref, importEntity);
+        performanceMonitor.stop('resolveLocalReference_uncached');
         return importEntity;
     }
 
+    performanceMonitor.stop('resolveLocalReference_uncached');
     return undefined;
 }
 
@@ -141,7 +157,9 @@ export function resolveImport(
 ): Symbol | Scope | undefined {
     for (const exportEntity of exportsMap.get(importName)) {
         const resolved = resolveExport(exportEntity, allSymbolTables, includesGraph);
-        if (resolved) return resolved;
+        if (resolved) {
+            return resolved;
+        }
     }
     return undefined;
 }
@@ -162,6 +180,7 @@ export function resolveExport(
     if (cachedResolution) {
         return cachedResolution
     }
+    performanceMonitor.start('resolveExport_uncached');
     let cachedResolutions: Map<Export, Symbol | Scope> | undefined
         = cachedExportResolutionsPerUri.get(exportEntity.uri);
     if (!cachedResolutions) {
@@ -190,9 +209,11 @@ export function resolveExport(
         if (foreignEntity instanceof Symbol
             || foreignEntity instanceof Scope && foreignEntity.kind === ScopeKind.Proc) {
             cachedResolutions.set(exportEntity, foreignEntity);
+            performanceMonitor.stop('resolveExport_uncached');
             return foreignEntity;
         }
     }
+    performanceMonitor.stop('resolveExport_uncached');
     return undefined;
 }
 
@@ -201,6 +222,7 @@ export function getAllReferencesForEntity(
     allSymbolTables: Map<string, SymbolTable>,
     includesGraph: IncludesGraph
 ): ReferenceInfo[] {
+    performanceMonitor.start('getAllReferencesForEntity');
     const allRefs: ReferenceInfo[] = [];
 
     for (const symbolTable of allSymbolTables.values()) {
@@ -214,6 +236,7 @@ export function getAllReferencesForEntity(
         }
     }
 
+    performanceMonitor.stop('getAllReferencesForEntity');
     return allRefs;
 }
 
@@ -279,6 +302,7 @@ export function isEntityUsed(
     allSymbolTables: Map<string, SymbolTable>,
     includesGraph: IncludesGraph
 ): boolean {
+    performanceMonitor.start("isEntityUsed");
     let refCount: number = 0;
     for (const translationUnitUri of includesGraph.getTranslationUnit(entity.uri)) {
         const symbolTable = allSymbolTables.get(translationUnitUri);
@@ -289,9 +313,13 @@ export function isEntityUsed(
             if (resolveLocalReference(ref, allSymbolTables, includesGraph) === entity) {
                 refCount++;
                 // Check if the ref count is more than 1 (the definition).
-                if (refCount > 1) return true;
+                if (refCount > 1) {
+                performanceMonitor.stop("isEntityUsed");
+                    return true;
+                }
             }
         }
     }
+    performanceMonitor.stop("isEntityUsed");
     return false;
 }

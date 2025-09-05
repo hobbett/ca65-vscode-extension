@@ -33,6 +33,7 @@ import { initializeCompletionProvider } from './completionProvider';
 import { deleteCachedResolutions } from './symbolResolver';
 import { ExportsMap } from './exportsMap';
 import { Ca65Settings, documentSettings } from './settings';
+import { Performance as PerformanceMonitor } from './performance';
 
 // --- Connection and Document Manager Setup ---
 const connection = createConnection(ProposedFeatures.all);
@@ -41,6 +42,7 @@ export let workspaceFolderUris: string[] = [];
 export const symbolTables = new Map<string, SymbolTable>();
 export const includesGraph = new IncludesGraph();
 export const exportsMap = new ExportsMap();
+export const performanceMonitor = new PerformanceMonitor();
 
 export const initializationGate = (() => {
     let resolve: () => void;
@@ -91,6 +93,7 @@ connection.onInitialized(async () => {
         // Initial scan of all symbol tables. This is required immediately after initialization since
         // otherwise we will not know the correct includes graph and import/export info for correct
         // symbol resolution.
+        performanceMonitor.start('onInitialized');
 
         let extensionsToScan: string[] = ['s', 'asm', 'inc']; // Default fallback
         try {
@@ -137,6 +140,7 @@ connection.onInitialized(async () => {
     } catch (e) {
         connection.console.error(`A critical error occurred during initialization: ${e}`);
     }
+    performanceMonitor.stop('onInitialized');
 
     initializationGate.open();
 });
@@ -157,6 +161,7 @@ export function getDocumentSettings(resource: string): Thenable<Ca65Settings> {
 // --- Central Document Update and Validation Logic ---
 async function updateAndValidate(document: TextDocument, debounce: boolean = true) {
     await initializationGate.isInitialized;
+    performanceMonitor.start('updateAndValidate');
 
     const allAffectedUris: Set<string> = new Set();
 
@@ -179,7 +184,13 @@ async function updateAndValidate(document: TextDocument, debounce: boolean = tru
     }
 
     triggerValidation(document.uri, debounce, allAffectedUris);
+    performanceMonitor.stop('updateAndValidate');
 }
+
+// Custom request from the client to dump performance stats
+connection.onRequest('ca65/dumpPerformanceStats', () => {
+    connection.console.info(performanceMonitor.getReport());
+});
 
 // --- Event Listeners ---
 documents.onDidChangeContent(async (change) => {

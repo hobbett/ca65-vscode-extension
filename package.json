@@ -104,6 +104,10 @@
             {
                 "command": "ca65.showReference",
                 "title": "ca65: Show Instruction Reference"
+            },
+            {
+                "command": "ca65.dumpPerformanceStats",
+                "title": "ca65: Dump Performance Stats to Output"
             }
         ],
         "snippets": [

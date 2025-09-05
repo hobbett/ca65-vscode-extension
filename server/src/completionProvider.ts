@@ -10,7 +10,7 @@ import {
     Position,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { getDocumentSettings, includesGraph, initializationGate, symbolTables } from './server';
+import { getDocumentSettings, includesGraph, initializationGate, performanceMonitor, symbolTables } from './server';
 import { directiveData, mnemonicData } from './dataManager';
 import { Export, Import, ImportKind, Macro, MacroKind, Scope, ScopeKind, Symbol, SymbolTable, SymbolTableEntity } from './symbolTable';
 import { findPreviousCheapLocalBoundary, CHEAP_LOCAL_BOUNDARY_REGEX } from './cheapLocalLabelUtils';
@@ -171,8 +171,10 @@ export function initializeCompletionProvider(connection: _Connection, documents:
     connection.onCompletion(async (params: TextDocumentPositionParams): Promise<CompletionItem[]> => {
         await initializationGate.isInitialized;
 
+        performanceMonitor.start("onCompletion");
         const document = documents.get(params.textDocument.uri);
         if (!document) {
+            performanceMonitor.stop("onCompletion");
             return [];
         }
         const settings = await getDocumentSettings(document.uri);
@@ -255,6 +257,7 @@ export function initializeCompletionProvider(connection: _Connection, documents:
 
             // 3. Add Macros
             completionItems.push(...await getCompletionMacros(document, symbolTables, settings));
+            performanceMonitor.stop("onCompletion");
             return completionItems;
         } else {
             // --- OPERAND CONTEXT: Suggest labels, constants, variables, and pseudo-functions/variables ---
@@ -287,7 +290,7 @@ export function initializeCompletionProvider(connection: _Connection, documents:
                     });
                 }
             }
-            
+            performanceMonitor.stop("onCompletion");
             return completionItems;
         }
     });

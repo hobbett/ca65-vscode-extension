@@ -14,16 +14,24 @@ import * as fs from 'fs/promises';
 import { mnemonicData, directiveData } from './dataManager';
 import { Macro, SymbolTableEntity } from './symbolTable';
 import { getLSPSymbolKind, resolveReference } from './symbolResolver';
-import { includesGraph, initializationGate, symbolTables } from './server';
+import { includesGraph, initializationGate, performanceMonitor, symbolTables } from './server';
 
 export function initializeHoverProvider(connection: _Connection, documents: TextDocuments<TextDocument>) {
     connection.onHover(async ({ textDocument, position }: TextDocumentPositionParams): Promise<Hover | undefined> => {
         await initializationGate.isInitialized;
+
+        performanceMonitor.start("onHover");
         
         const document = documents.get(textDocument.uri);
-        if (!document) return undefined;
+        if (!document) {
+            performanceMonitor.stop("onHover");
+            return undefined;
+        }
         const symbolTable = symbolTables.get(textDocument.uri);
-        if (!symbolTable) return undefined;
+        if (!symbolTable) {
+            performanceMonitor.stop("onHover");
+            return undefined;
+        }
 
         const ref = symbolTable.getReferenceAtPosition(position);
         if (ref) {
@@ -44,6 +52,7 @@ export function initializeHoverProvider(connection: _Connection, documents: Text
                         definitionDocument = TextDocument.create(foundEntity.uri, 'ca65-lsp', 0, content);
                     } catch (e) {
                         connection.console.error(`Failed to read file for hover: ${foundEntity.uri}`);
+                        performanceMonitor.stop("onHover");
                         return undefined; // Can't show hover if we can't read the file
                     }
                 }
@@ -77,19 +86,23 @@ export function initializeHoverProvider(connection: _Connection, documents: Text
                     let data = directiveData[name];
                     if (typeof data === 'string') data = directiveData[data];
                     if (data) {
+                        performanceMonitor.stop("onHover");
                         return { contents: { kind: MarkupKind.Markdown, value: generateDirectiveHoverMarkdown(word, data) }, range: hoverRange };
                     }
                 } else {
                     const name = word.toUpperCase();
                     const data = mnemonicData[name];
                     if (data) {
+                        performanceMonitor.stop("onHover");
                         return { contents: { kind: MarkupKind.Markdown, value: generateMnemonicHoverMarkdown(word, data) }, range: hoverRange };
                     }
                 }
+                performanceMonitor.stop("onHover");
                 return undefined;
             }
         }
 
+        performanceMonitor.stop("onHover");
         return undefined;
     });
 }

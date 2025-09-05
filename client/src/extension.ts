@@ -67,6 +67,12 @@ export function activate(context: ExtensionContext) {
 		showReferencePanel(context, mnemonicId);
 	});
 	context.subscriptions.push(disposable);
+
+	context.subscriptions.push(commands.registerCommand('ca65.dumpPerformanceStats', () => {
+		if (client) {
+			client.sendRequest('ca65/dumpPerformanceStats');
+		}
+	}));
 }
 
 export function deactivate(): Thenable<void> | undefined {

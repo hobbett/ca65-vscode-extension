@@ -7,7 +7,7 @@ import { Export, ExportKind, ImportKind, Macro, MacroKind, ReferenceInfo, Scope,
 import { URI } from 'vscode-uri';
 import * as path from 'path';
 import { getAnonLabelRefOffsetFromPreviousLabel } from './anonymousLabelUtils';
-import { getDocumentSettings } from './server';
+import { getDocumentSettings, performanceMonitor } from './server';
 import { resolveIncludePath } from './pathUtils';
 
 type LineItem = {
@@ -241,6 +241,7 @@ export function parseImportExportArgs(text: string, offset: number): ParsedImpor
 export async function scanDocument(document: TextDocument): Promise<SymbolTable> {
     const symbolTable = new SymbolTable(document.uri);
     const settings = await getDocumentSettings(document.uri);
+    performanceMonitor.start("scanDocument");
     let currentScope: Scope = symbolTable.getRootScope();
     let currentMacro: Macro | null;
 
@@ -813,6 +814,7 @@ export async function scanDocument(document: TextDocument): Promise<SymbolTable>
         };
         openScope = openScope.scope;
     }
+    performanceMonitor.stop("scanDocument");
     // symbolTable.dump();
     return symbolTable;
 }
