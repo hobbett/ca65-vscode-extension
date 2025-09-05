@@ -810,7 +810,7 @@ export async function scanDocument(document: TextDocument): Promise<SymbolTable>
     const lastLineNum = document.lineCount - 1;
     while (openScope != null) {
         openScope.range.end = {
-            line: lastLineNum, character: Number.MAX_VALUE
+            line: lastLineNum, character: 0
         };
         openScope = openScope.scope;
     }
