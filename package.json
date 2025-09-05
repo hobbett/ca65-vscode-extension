@@ -120,7 +120,16 @@
     "scripts": {
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -b tsconfig.json",
-        "watch": "tsc -b tsconfig.json -w"
+        "watch": "tsc -b tsconfig.json -w",
+        "package-lsp": "npm run package-lsp:linux && npm run package-lsp:win && npm run package-lsp:macos",
+        "package-lsp:linux": "npm run compile && pkg --targets node18-linux-x64 --output dist/bin/ca65-lsp-linux server/out/server.js",
+        "package-lsp:win": "npm run compile && pkg --targets node18-win-x64 --output dist/bin/ca65-lsp-win.exe server/out/server.js",
+        "package-lsp:macos": "npm run compile && pkg --targets node18-macos-x64 --output dist/bin/ca65-lsp-macos server/out/server.js"
+    },
+    "pkg": {
+        "assets": [
+            "server/data/**/*"
+        ]
     },
     "devDependencies": {
         "@types/node": "^24.3.0",

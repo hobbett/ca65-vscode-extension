@@ -64,6 +64,14 @@ Paths for `.include` and `.incbin` (i.e. what you would pass into `-I` and `--bi
 
 Please see the Settings gear icon in the installed extension to easily set this and other settings.
 
+## Building a standalone LSP executable for other editors
+You can build a standalone LSP executable via the following shell commands. The executable will be placed in `dist/bin/ca65-lsp-<platform>` 
+```
+npm run package-lsp:linux   # Linux
+npm run package-lsp:win     # Windows
+npm run package-lsp:macos   # MacOS
+npm run package-lsp         # All Three
+```
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
