@@ -58,6 +58,8 @@ e.g.
 }
 ```
 
+For users of the standalone LSP with other IDEs, please use the `ca65.additionalExtensions` setting to declare additional extensions to scan for.
+
 ## Other settings
 
 Paths for `.include` and `.incbin` (i.e. what you would pass into `-I` and `--bin-include-dir` during the assembly step) may be specified by `ca65.includeDirs` and `ca65.binIncludeDirs` settings.

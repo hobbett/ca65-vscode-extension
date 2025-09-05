@@ -7,6 +7,7 @@ export interface Ca65Settings {
     autoIncludeExtensions: string[];
     anonymousLabelIndexHints: boolean;
     importFromHints: boolean;
+    additionalExtensions: string[];
 }
 
 export const documentSettings: Map<string, Thenable<Ca65Settings>> = new Map();

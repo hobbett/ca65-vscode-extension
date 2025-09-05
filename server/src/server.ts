@@ -95,31 +95,51 @@ connection.onInitialized(async () => {
         // symbol resolution.
         performanceMonitor.start('onInitialized');
 
-        let extensionsToScan: string[] = ['s', 'asm', 'inc']; // Default fallback
+        // Define default glob patterns for file discovery. These are used if no user configuration is found.
+        const defaultGlobs = ['**/*.s', '**/*.asm', '**/*.inc'];
+        let configuredGlobs: string[] = [];
+
         try {
-            // The server's code is in server/out, so go up two levels to the project root
-            const packageJsonPath = path.resolve(__dirname, '..', '..', 'package.json');
-            const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8');
-            const packageJson = JSON.parse(packageJsonContent);
-            
-            const langContribution = packageJson.contributes.languages.find(
-                (lang: any) => lang.id === 'ca65'
-            );
-            
-            if (langContribution && langContribution.extensions) {
-                // Remove the leading '.' from each extension
-                extensionsToScan = langContribution.extensions.map(
-                    (ext: string) => ext.startsWith('.') ? ext.substring(1) : ext
-                );
-            }
+            // Fetch the user's file associations directly from the client (VS Code).
+            // This correctly handles user settings like "*.a65": "ca65".
+            const config = await connection.workspace.getConfiguration({ section: 'files' });
+            const associations = config?.associations || {};
+
+            // Filter for associations that point to the 'ca65' language ID.
+            configuredGlobs = Object.entries(associations)
+                .filter(([_pattern, langId]) => langId === 'ca65')
+                .map(([pattern, _langId]) => {
+                    // Ensure simple patterns like '*.s' are treated as recursive across all directories.
+                    if (!pattern.includes('/') && !pattern.includes('\\')) {
+                        return `**/${pattern}`;
+                    }
+                    return pattern;
+                });
         } catch (e) {
-            connection.console.error(`Could not read extensions from package.json: ${e}`);
+            connection.console.error(`Could not fetch 'files.associations' from client: ${e}`);
         }
-        const globPattern = `**/*.{${extensionsToScan.join(',')}}`;
+
+        // Cross-editor compatible: Fetch additional extensions from our own settings.
+        try {
+            const ca65Config = await connection.workspace.getConfiguration({ section: 'ca65' });
+            const customExtensions = ca65Config?.additionalExtensions || [];
+            const customGlobs = customExtensions.map((ext: string) => {
+                // Ensure extension starts with a dot, then create glob.
+                const cleanExt = ext.startsWith('.') ? ext : `.${ext}`;
+                return `**/*${cleanExt}`;
+            });
+            configuredGlobs.push(...customGlobs);
+        } catch (e) {
+            connection.console.error(`Could not fetch 'ca65.additionalExtensions' from client: ${e}`);
+        }
+
+        // Combine defaults with user settings, removing any duplicates.
+        const allGlobs = [...new Set([...defaultGlobs, ...configuredGlobs])];
 
         for (const folderUri of workspaceFolderUris) {
             const folderPath = URI.parse(folderUri).fsPath;
-            const files = await glob(globPattern, { cwd: folderPath, nodir: true });
+            // The glob library accepts an array of patterns, so we pass all of them.
+            const files = await glob(allGlobs, { cwd: folderPath, nodir: true });
 
             for (const file of files) {
                 try {

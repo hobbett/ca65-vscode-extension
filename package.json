@@ -97,6 +97,13 @@
                     "type": "boolean",
                     "description": "Enables inlay hints for display the origin file of an import.",
                     "default": "true"
+                },
+                "ca65.additionalExtensions": {
+                    "type": "array",
+                    "description": "A list of extensions (e.g. `.i`, `.mac`) for which we will index for in addition to the default `.s`, `.asm`, and `.inc` (and any `file.associations` set to `ca65`). This is intended for users of the standalone LSP using other editors that do not have VSCode's `file.associations`.",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
