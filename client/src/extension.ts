@@ -85,7 +85,7 @@ export function deactivate(): Thenable<void> | undefined {
 // --- Implementation for the "Show Reference" Panel ---
 async function showReferencePanel(context: ExtensionContext, mnemonicId?: string) {
 	// 1. Load the JSON data
-	const dataPath = context.asAbsolutePath(path.join('server', 'src', 'data', '6502_mnemonics.json'));
+	const dataPath = context.asAbsolutePath(path.join('server', 'data', '6502_mnemonics.json'));
 	const rawData = await fs.readFile(dataPath, 'utf8');
 	const jsonData = JSON.parse(rawData);
 
