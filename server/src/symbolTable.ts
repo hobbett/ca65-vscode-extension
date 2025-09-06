@@ -409,7 +409,7 @@ export class SymbolTable {
     }
 
     getAllMacros(): Macro[] {
-        return Array.from(this.macros.values()).sort((a, b) => a.range.start.line - b.range.start.line);
+        return Array.from(this.macros.values());
     }
 
     /**

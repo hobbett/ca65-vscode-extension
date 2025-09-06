@@ -330,28 +330,31 @@ async function getCompletionMacros(
 
     // Find macros in files we can auto-include.
     for (const [otherUri, symbolTable] of allSymbolTables) {
-        if (!isAutoIncludable(otherUri, settings)) continue;
         if (seenUris.has(otherUri)) continue;
-        
-            for (const macro of symbolTable.getAllMacros()) {
-                if (macro.kind !== MacroKind.Macro) continue;
-
-                let label = macro.name;
-                let kind = getCompletionItemKind(getLSPSymbolKind(macro));
-                let detail = `${getCompletionItemDetail(macro)}`;
-                let canonicalPath = await findCanonicalIncludePath(document.uri, otherUri, settings.includeDirs);
-
-                completionItems.push({
-                    label,
-                    kind,
-                    detail,
-                    labelDetails: {
-                        description: `include ${canonicalPath}`
-                    },
-                    additionalTextEdits: [makeIncludeEdit(document, canonicalPath)],
-                    sortText: AUTO_INCLUDE_ITEM_PREFIX + label
-                });
+        if (!isAutoIncludable(otherUri, settings)) continue;
+        let canonicalPath;
+        for (const macro of symbolTable.getAllMacros()) {
+            if (macro.kind !== MacroKind.Macro) continue;
+            if (!canonicalPath) {
+                canonicalPath =
+                    await findCanonicalIncludePath(document.uri, otherUri, settings.includeDirs);
             }
+
+            let label = macro.name;
+            let kind = getCompletionItemKind(getLSPSymbolKind(macro));
+            let detail = `${getCompletionItemDetail(macro)}`;
+
+            completionItems.push({
+                label,
+                kind,
+                detail,
+                labelDetails: {
+                    description: `include ${canonicalPath}`
+                },
+                additionalTextEdits: [makeIncludeEdit(document, canonicalPath)],
+                sortText: AUTO_INCLUDE_ITEM_PREFIX + label
+            });
+        }
     }
 
     return Array.from(completionItems.values());
@@ -447,9 +450,8 @@ async function getCompletionSymbols(
     for (const [uri, symbolTable] of allSymbolTables) {
         if (includedUris.has(uri)) continue;
 
-        let canonicalPath = await findCanonicalIncludePath(document.uri, uri, settings.includeDirs);
-
         if (isAutoIncludable(uri, settings)) {
+            let canonicalPath;
             // Suggest including .inc files that define a symbol
             for (const entity of symbolTable.getAllDefinedEntities()) {
                 if (
@@ -458,6 +460,10 @@ async function getCompletionSymbols(
                     || entity instanceof Scope && entity.kind === ScopeKind.Proc
                 ) {
                     if (visibleFqns.has(entity.getFullyQualifiedName())) continue;
+                    if (!canonicalPath) {
+                        canonicalPath =
+                            await findCanonicalIncludePath(document.uri, uri, settings.includeDirs);
+                    }
                     let label = currentScope.findRelativeName(entity);
                     let kind = getCompletionItemKind(getLSPSymbolKind(entity));
                     let detail = `${getCompletionItemDetail(entity)}`;
@@ -479,6 +485,10 @@ async function getCompletionSymbols(
             for (const importEntity of symbolTable.imports) {
                 if (seenImports.has(importEntity.name)) continue;
                 if (visibleFqns.has(importEntity.getFullyQualifiedName())) continue;
+                if (!canonicalPath) {
+                    canonicalPath =
+                        await findCanonicalIncludePath(document.uri, uri, settings.includeDirs);
+                }
 
                 let label = currentScope.findRelativeName(importEntity);
                 let kind = getCompletionItemKind(getLSPSymbolKind(importEntity));
