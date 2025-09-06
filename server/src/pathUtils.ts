@@ -1,8 +1,7 @@
 import * as path from 'path';
 import { fileURLToPath } from "url";
-import * as fs from 'fs/promises';
 import { URI } from 'vscode-uri';
-import { workspaceFolderUris } from './server';
+import { symbolTables, workspaceFolderUris } from './server';
 import { globSync } from 'glob';
 
 export function getRelativePath(fromUri: string, toUri: string): string {
@@ -54,31 +53,29 @@ export function resolveWorkspaceRelativeDirs(
     return resolvedPaths;
 }
 
-export async function resolveIncludePath(
+export function resolveIncludeUri(
     currentFileUri: string,
     includeFile: string,
     includeDirs: string[] | undefined,
-): Promise<string | null> {
+): string | null {
     const currentDir = path.dirname(URI.parse(currentFileUri).fsPath);
     const resolvedIncludeDirs = resolveWorkspaceRelativeDirs(currentFileUri, includeDirs);
     const directoriesToSearch = [currentDir, ...resolvedIncludeDirs];
 
     for (const dir of directoriesToSearch) {
         const fullPath = path.join(dir, includeFile);
-        try {
-            await fs.access(fullPath);
-            return fullPath;
-        } catch {}
+        const uri = URI.parse(fullPath).toString();
+        if (symbolTables.has(uri)) return uri
     }
 
     return null;
 }
 
-export async function findCanonicalIncludePath(
+export function findCanonicalIncludePath(
     currentFileUri: string,
     importFileUri: string,
     includeDirs: string[] | undefined,
-): Promise<string> {
+): string {
     const currentDir = path.dirname(URI.parse(currentFileUri).fsPath);
     const importFsPath = URI.parse(importFileUri).fsPath;
 
@@ -102,8 +99,8 @@ export async function findCanonicalIncludePath(
     });
 
     for (const candidate of candidates) {
-        const resolved = await resolveIncludePath(currentFileUri, candidate, includeDirs);
-        if (resolved && URI.file(resolved).fsPath === URI.parse(importFileUri).fsPath) {
+        const resolvedUri = resolveIncludeUri(currentFileUri, candidate, includeDirs);
+        if (resolvedUri && resolvedUri === URI.parse(importFileUri).fsPath) {
             return candidate; // Found canonical relative path
         }
     }

@@ -7,7 +7,7 @@ import {
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import { resolveIncludePath } from './pathUtils';
+import { resolveIncludeUri } from './pathUtils';
 import { getDocumentSettings, initializationGate } from './server';
 
 export function initializeDocumentLinkProvider(connection: _Connection, documents: TextDocuments<TextDocument>) {
@@ -38,18 +38,17 @@ export function initializeDocumentLinkProvider(connection: _Connection, document
                 const endChar = startChar + filename.length;
                 const range = Range.create(i, startChar, i, endChar);
 
-                let targetPath: string | null = null;
+                let targetUri: string | null = null;
                 if (directive === "include") {
-                    targetPath = await resolveIncludePath(document.uri, filename, settings.includeDirs);
+                    targetUri = resolveIncludeUri(document.uri, filename, settings.includeDirs);
                 } else if (directive === "incbin") {
-                    targetPath = await resolveIncludePath(document.uri, filename, settings.binIncludeDirs);
+                    targetUri = resolveIncludeUri(document.uri, filename, settings.binIncludeDirs);
                 }
 
-                if (targetPath) {
-                    console.log(`found target path for ${directive}: ${targetPath}`);
+                if (targetUri) {
                     links.push({
                         range,
-                        target: URI.file(targetPath).toString(),
+                        target: targetUri,
                         tooltip: `Click to open ${filename}`
                     });
                 }

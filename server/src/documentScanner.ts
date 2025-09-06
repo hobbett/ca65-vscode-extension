@@ -8,7 +8,7 @@ import { URI } from 'vscode-uri';
 import * as path from 'path';
 import { getAnonLabelRefOffsetFromPreviousLabel } from './anonymousLabelUtils';
 import { getDocumentSettings, performanceMonitor } from './server';
-import { resolveIncludePath } from './pathUtils';
+import { resolveIncludeUri } from './pathUtils';
 
 type LineItem = {
     text: string;
@@ -714,13 +714,10 @@ export async function scanDocument(document: TextDocument): Promise<SymbolTable>
                     const match = argsText.match(/^(['"])(.*)\1$/);
                     if (match) {
                         const filename = match[2];
-                        const targetPath =
-                            await resolveIncludePath(document.uri, filename, settings.includeDirs);
-                        if (targetPath) {
-                            const targetUri = URI.file(targetPath).toString();
-                            if (targetUri) {
-                                symbolTable.includedFiles.push(targetUri);
-                            }
+                        const targetUri =
+                            resolveIncludeUri(document.uri, filename, settings.includeDirs);
+                        if (targetUri) {
+                            symbolTable.includedFiles.push(targetUri);
                         }
                         currentSegment = `segment from ${filename}`;
                     }
