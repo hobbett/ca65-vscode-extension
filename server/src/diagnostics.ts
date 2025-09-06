@@ -31,6 +31,8 @@ let connection: _Connection;
 let documents: TextDocuments<TextDocument>;
 let hasShownCa65NotFoundMessage = false;
 
+let validationAbortController = new AbortController();
+
 export function initializeDiagnostics(conn: _Connection, docs: TextDocuments<TextDocument>) {
     connection = conn;
     documents = docs;
@@ -43,7 +45,7 @@ export function initializeDiagnostics(conn: _Connection, docs: TextDocuments<Tex
  * @param existingDiags A list of existing diagnostics on the file to avoid creating conflicting hints.
  * @returns An array of diagnostics for unused symbols.
  */
-function findUnusedSymbolDiagnostics(uri: string, checkedUnusedSymbols: Set<string>, existingDiags: readonly Diagnostic[]): Diagnostic[] {
+async function findUnusedSymbolDiagnostics(uri: string, checkedUnusedSymbols: Set<string>, existingDiags: readonly Diagnostic[]): Promise<Diagnostic[]> {
     performanceMonitor.start("findUnusedSymbolDiagnostics");
     const lspDiagnostics: Diagnostic[] = [];
     const symbolTable = symbolTables.get(uri);
@@ -54,7 +56,12 @@ function findUnusedSymbolDiagnostics(uri: string, checkedUnusedSymbols: Set<stri
 
     const definedEntities = symbolTable.getAllDefinedEntities();
     
+    let i = 0;
     for (const entity of definedEntities) {
+        // Await every 100 items in case we abort.
+        if (i % 100 === 0) await Promise.resolve();
+        i++;
+
         const fqn = entity.getFullyQualifiedName();
         if (entity.name.startsWith('<anon') || checkedUnusedSymbols.has(fqn)) {
             continue;
@@ -117,15 +124,21 @@ export async function findCa65Executable(settings: Ca65Settings): Promise<string
 /**
  * Gathers only the ca65 compiler diagnostics for a single translation unit.
  * @param textDocument The root document of the translation unit to validate.
+ * @param signal AbortSignal for cancelling the operation
  * @returns A Map of URIs to their collected compiler diagnostics.
  */
-async function getCompilerDiagnosticsForUnit(textDocument: TextDocument): Promise<Map<string, Diagnostic[]>> {
+async function getCompilerDiagnosticsForUnit(
+    textDocument: TextDocument,
+    signal: AbortSignal
+): Promise<Map<string, Diagnostic[]>> {
     performanceMonitor.start("getCompilerDiagnosticsForUnit");
     const settings = await getDocumentSettings(textDocument.uri);
+    if (signal.aborted) return new Map();
     const diagnosticsByUri = new Map<string, Diagnostic[]>();
     if (!settings.enableCa65StdErrDiagnostics) return diagnosticsByUri;
 
     const ca65Path = await findCa65Executable(settings);
+    if (signal.aborted) return new Map();
     if (!ca65Path) {
         if (!hasShownCa65NotFoundMessage) {
             connection.window.showErrorMessage('ca65 executable not found. Please set "ca65.executablePath" or ensure it is in your PATH.');
@@ -152,11 +165,12 @@ async function getCompilerDiagnosticsForUnit(textDocument: TextDocument): Promis
 
     let stderr = '';
     try {
-        const result = await execFileAsync(ca65Path, args, { cwd: workspaceRoot });
+        const result = await execFileAsync(ca65Path, args, { cwd: workspaceRoot, signal });
         stderr = result.stderr;
     } catch (err: any) {
         if (err && err.stderr) stderr = err.stderr;
     }
+    if (signal.aborted) return new Map();
 
     if (stderr) {
         const lines = stderr.split(/\r?\n/);
@@ -164,6 +178,7 @@ async function getCompilerDiagnosticsForUnit(textDocument: TextDocument): Promis
         const noteRegex = /^(.*?):(\d+):\sNote:\s(.*)$/;
         
         for (let i = 0; i < lines.length; i++) {
+            if (signal.aborted) return new Map();
             const line = lines[i];
             const errorMatch = line.match(errorRegex);
             if (errorMatch) {
@@ -242,6 +257,10 @@ async function getCompilerDiagnosticsForUnit(textDocument: TextDocument): Promis
     return diagnosticsByUri;
 }
 
+export function abortValidation() {
+    validationAbortController.abort();
+}
+
 /**
  * Triggers a debounced validation.
  * @param uri The URI of the file that triggered the validation.
@@ -249,13 +268,17 @@ async function getCompilerDiagnosticsForUnit(textDocument: TextDocument): Promis
  * @param allFilesToUpdate A pre-calculated set of all files that need their diagnostics refreshed.
  */
 export function triggerValidation(uri: string, debounce: boolean = true, allFilesToUpdate?: Set<string>) {
+    validationAbortController.abort();
+
     if (validationTimers.has(uri)) {
         clearTimeout(validationTimers.get(uri)!);
     }
 
     validationTimers.set(uri, setTimeout(async () => {
         validationTimers.delete(uri);
-        
+        validationAbortController = new AbortController();
+        const signal = validationAbortController.signal;
+
         const fullDiagnosticsByUri = new Map<string, Diagnostic[]>();
         
         // If a specific set of files wasn't provided, calculate it.
@@ -278,6 +301,7 @@ export function triggerValidation(uri: string, debounce: boolean = true, allFile
         // 2. Gather context-dependent compiler diagnostics from each root.
         const seenCompilerDiags = new Set<string>();
         for (const rootUri of allRoots) {
+            if (signal.aborted) return;
             let doc = documents.get(rootUri);
             if (!doc) {
                 try {
@@ -285,7 +309,7 @@ export function triggerValidation(uri: string, debounce: boolean = true, allFile
                     doc = TextDocument.create(rootUri, 'ca65', 0, content);
                 } catch { continue; }
             }
-            const compilerDiagnostics = await getCompilerDiagnosticsForUnit(doc);
+            const compilerDiagnostics = await getCompilerDiagnosticsForUnit(doc, signal);
             for (const [fileUri, diags] of compilerDiagnostics.entries()) {
                 const existingDiags = fullDiagnosticsByUri.get(fileUri);
                 if (existingDiags) {
@@ -305,7 +329,8 @@ export function triggerValidation(uri: string, debounce: boolean = true, allFile
         if (settings.enableUnusedSymbolDiagnostics) {
             const checkedUnusedSymbols = new Set<string>();
             for (const fileUri of allFilesToUpdate) {
-                const unusedSymbolDiags = findUnusedSymbolDiagnostics(fileUri, checkedUnusedSymbols, fullDiagnosticsByUri.get(fileUri) || []);
+                const unusedSymbolDiags = await findUnusedSymbolDiagnostics(fileUri, checkedUnusedSymbols, fullDiagnosticsByUri.get(fileUri) || []);
+                if (signal.aborted) return;
                 fullDiagnosticsByUri.get(fileUri)?.push(...unusedSymbolDiags);
             }
         }

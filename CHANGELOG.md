@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.4.9] - 2025-09-06
 - Speed up auto-completion
+- Abort in-progress diagnostics when file changes
 
 ## [1.4.8] - 2025-09-06
 - Fix detection of `file.associations`

@@ -14,7 +14,7 @@ import * as fs from 'fs/promises';
 import { glob } from 'glob';
 
 import { loadAllData } from './dataManager';
-import { initializeDiagnostics, triggerValidation } from './diagnostics';
+import { abortValidation, initializeDiagnostics, triggerValidation } from './diagnostics';
 import { initializeDocumentSymbolProvider } from './documentSymbolProvider';
 import { scanDocument } from './documentScanner';
 import { initializeFoldingRangeProvider } from './foldingRangeProvider';
@@ -181,6 +181,7 @@ export function getDocumentSettings(resource: string): Thenable<Ca65Settings> {
 // --- Central Document Update and Validation Logic ---
 async function updateAndValidate(document: TextDocument, debounce: boolean = true) {
     await initializationGate.isInitialized;
+    abortValidation();
     performanceMonitor.start('updateAndValidate');
 
     const allAffectedUris: Set<string> = new Set();
