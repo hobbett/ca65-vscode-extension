@@ -22,20 +22,20 @@
             "end": "'"
         },
         {
+            "name": "meta.namespace",
+            "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(::)",
+            "captures": {
+                "1": { "name": "entity.name.namespace.ca65" },
+                "2": { "name": "punctuation.separator.namespace.ca65" }
+            }
+        },
+                {
             "name": "entity.name.label.ca65",
             "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*):"
         },
         {
             "name": "entity.name.label.cheap.ca65",
             "match": "@[a-zA-Z0-9_]*:"
-        },
-        {
-            "name": "meta.namespace.cpp",
-            "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b(::)",
-            "captures": {
-                "1": { "name": "entity.name.namespace.ca65" },
-                "2": { "name": "punctuation.separator.namespace.ca65" }
-            }
         },
         {
             "match": "(?i)^\\s*(\\.(?:proc|macro))\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
