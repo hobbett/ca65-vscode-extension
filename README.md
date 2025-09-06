@@ -35,7 +35,8 @@ This extension provides a full-featured language server to make writing `ca65` a
 * Anonymous structs are currently not handled to spec (the spec adds the members to an anonymous scope, but `ca65` actually adds them to the parent scope).
 
 ## Pre-requisites
-You must provide the `ca65` in your system's `PATH` or set setting `ca65.executablePath` to the absolute path of your `ca65` executable.
+- You must provide the `ca65` in your system's `PATH` or set setting `ca65.executablePath` to the absolute path of your `ca65` executable.
+- Auto-save must be enabled for reliable diagnostics.
 
 ## Installation
 
