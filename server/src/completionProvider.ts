@@ -337,7 +337,7 @@ async function getCompletionMacros(
             if (macro.kind !== MacroKind.Macro) continue;
             if (!canonicalPath) {
                 canonicalPath =
-                    findCanonicalIncludePath(document.uri, otherUri, settings.includeDirs);
+                    await findCanonicalIncludePath(document.uri, otherUri, settings.includeDirs);
             }
 
             let label = macro.name;
@@ -462,7 +462,7 @@ async function getCompletionSymbols(
                     if (visibleFqns.has(entity.getFullyQualifiedName())) continue;
                     if (!canonicalPath) {
                         canonicalPath =
-                            findCanonicalIncludePath(document.uri, uri, settings.includeDirs);
+                            await findCanonicalIncludePath(document.uri, uri, settings.includeDirs);
                     }
                     let label = currentScope.findRelativeName(entity);
                     let kind = getCompletionItemKind(getLSPSymbolKind(entity));
@@ -487,7 +487,7 @@ async function getCompletionSymbols(
                 if (visibleFqns.has(importEntity.getFullyQualifiedName())) continue;
                 if (!canonicalPath) {
                     canonicalPath =
-                        findCanonicalIncludePath(document.uri, uri, settings.includeDirs);
+                        await findCanonicalIncludePath(document.uri, uri, settings.includeDirs);
                 }
 
                 let label = currentScope.findRelativeName(importEntity);

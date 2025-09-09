@@ -715,7 +715,7 @@ export async function scanDocument(document: TextDocument): Promise<SymbolTable>
                     if (match) {
                         const filename = match[2];
                         const targetUri =
-                            resolveIncludeUri(document.uri, filename, settings.includeDirs);
+                            await resolveIncludeUri(document.uri, filename, settings.includeDirs);
                         if (targetUri) {
                             symbolTable.includedFiles.push(targetUri);
                         }

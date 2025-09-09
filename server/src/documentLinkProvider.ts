@@ -40,9 +40,9 @@ export function initializeDocumentLinkProvider(connection: _Connection, document
 
                 let targetUri: string | null = null;
                 if (directive === "include") {
-                    targetUri = resolveIncludeUri(document.uri, filename, settings.includeDirs);
+                    targetUri = await resolveIncludeUri(document.uri, filename, settings.includeDirs);
                 } else if (directive === "incbin") {
-                    targetUri = resolveIncludeUri(document.uri, filename, settings.binIncludeDirs);
+                    targetUri = await resolveIncludeUri(document.uri, filename, settings.binIncludeDirs);
                 }
 
                 if (targetUri) {
