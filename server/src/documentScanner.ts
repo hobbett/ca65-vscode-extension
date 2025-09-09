@@ -9,6 +9,7 @@ import * as path from 'path';
 import { getAnonLabelRefOffsetFromPreviousLabel } from './anonymousLabelUtils';
 import { getDocumentSettings, performanceMonitor } from './server';
 import { resolveIncludeUri } from './pathUtils';
+import { mnemonicData } from './dataManager';
 
 type LineItem = {
     text: string;
@@ -88,8 +89,13 @@ export function parseQualifiedNames(argsText: string, argsOffset: number = 0): P
     // Use a mutable copy of the text to work with
     let mutableArgsText = argsText;
 
-    // Strip out comments and strings first to avoid parsing their contents
-    mutableArgsText = mutableArgsText.replace(/"([^"]*)"/g, (m, inner) => `"${' '.repeat(inner.length)}"`);
+    mutableArgsText = mutableArgsText
+        // mask strings
+        .replace(/"([^"]*)"/g, (m, inner) => `"${' '.repeat(inner.length)}"`)
+        // mask hex numbers
+        .replace(/\$[0-9a-fA-F]+/g, (m) => ' '.repeat(m.length))
+        // mask character literals
+        .replace(/'([^']*)'/g, (m, inner) => `'${' '.repeat(inner.length)}'`);
 
     // --- Pass 1: Find and parse all .sizeof expressions ---
     const sizeofRegex = /\.sizeof\s*\(([^)]*)\)/g;
@@ -535,7 +541,7 @@ export async function scanDocument(document: TextDocument): Promise<SymbolTable>
             const cmd = command.text.toLowerCase();
             const argsText = args?.text || '';
             const argsIndex = args?.index || command.index + command.text.length;
-            if (!cmd.startsWith('.')) {
+            if (!cmd.startsWith('.') && !mnemonicData[cmd.toUpperCase()]) {
                 addSingleReference('macro', line, command.text, command.index, symbolTable.getRootScope());
             }
 
@@ -783,12 +789,17 @@ export async function scanDocument(document: TextDocument): Promise<SymbolTable>
     }
 
     for (let lineNumber = 0; lineNumber < document.lineCount; lineNumber++) {
-        const text = document.getText(
+        let text = document.getText(
             Range.create(
                 lineNumber, 0,
                 lineNumber + 1, 0
             )
         );
+
+        if (text.includes(';')) {
+            text = text.slice(0, text.indexOf(`;`));
+        }
+
         addAnonymousLabelRefs(lineNumber, text);
 
         // Order matters
