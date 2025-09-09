@@ -115,6 +115,10 @@
             {
                 "command": "ca65.dumpPerformanceStats",
                 "title": "ca65: Dump Performance Stats to Output"
+            },
+            {
+                "command": "ca65.dumpSymbolTables",
+                "title": "ca65: Dump Symbol Tables to Output"
             }
         ],
         "snippets": [

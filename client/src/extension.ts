@@ -73,6 +73,12 @@ export function activate(context: ExtensionContext) {
 			client.sendRequest('ca65/dumpPerformanceStats');
 		}
 	}));
+
+	context.subscriptions.push(commands.registerCommand('ca65.dumpSymbolTables', () => {
+		if (client) {
+			client.sendRequest('ca65/dumpSymbolTables');
+		}
+	}));
 }
 
 export function deactivate(): Thenable<void> | undefined {

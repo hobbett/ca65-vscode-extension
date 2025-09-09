@@ -213,6 +213,14 @@ connection.onRequest('ca65/dumpPerformanceStats', () => {
     connection.console.info(performanceMonitor.getReport());
 });
 
+// Custom request from the client to dump performance stats
+connection.onRequest('ca65/dumpSymbolTables', () => {
+    for (const [uri, table] of symbolTables) {
+        connection.console.info(`Symbol Table for ${uri}:`);
+        table.dump();
+    }
+});
+
 // --- Event Listeners ---
 documents.onDidChangeContent(async (change) => {
     await updateAndValidate(change.document);
