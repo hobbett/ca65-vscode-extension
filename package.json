@@ -104,6 +104,11 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "ca65.smartFolding": {
+                    "type": "boolean",
+                    "description": "Enables smart folding based on scopes, procs, and other blocks. Disable to use the editor's default folding.",
+                    "default": true
                 }
             }
         },

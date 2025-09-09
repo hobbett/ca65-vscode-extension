@@ -8,6 +8,7 @@ export interface Ca65Settings {
     anonymousLabelIndexHints: boolean;
     importFromHints: boolean;
     additionalExtensions: string[];
+    smartFolding: boolean;
 }
 
 export const documentSettings: Map<string, Thenable<Ca65Settings>> = new Map();

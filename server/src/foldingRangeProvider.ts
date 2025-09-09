@@ -4,11 +4,16 @@ import {
     FoldingRange,
     FoldingRangeKind
 } from 'vscode-languageserver/node';
-import { initializationGate, symbolTables } from './server';
+import { getDocumentSettings, initializationGate, symbolTables } from './server';
 
 export function initializeFoldingRangeProvider(connection: _Connection) {
-    connection.onFoldingRanges(async (params: FoldingRangeParams): Promise<FoldingRange[]> => {
+    connection.onFoldingRanges(async (params: FoldingRangeParams): Promise<FoldingRange[] | null> => {
         await initializationGate.isInitialized;
+
+        const settings = await getDocumentSettings(params.textDocument.uri);
+        if (!settings.smartFolding) {
+            return null; // Return null to allow VS Code's default folding to take over
+        }
 
         const symbolTable = symbolTables.get(params.textDocument.uri);
         if (!symbolTable) return [];

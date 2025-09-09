@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.4.13] - 2025-09-10
 - Cleaned up symbol table references (removed hex letters, char literals, comment contents)
+- Add setting to toggle folding ranges
 
 ## [1.4.12] - 2025-09-09
 - Fix issue where includes were not correctly resolved on initial scan, which lead to broken "Find all references"
