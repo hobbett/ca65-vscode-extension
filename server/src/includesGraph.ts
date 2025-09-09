@@ -133,11 +133,11 @@ export class IncludesGraph {
         for (const [uri, fileNode] of this.nodes) {
             result.push(`\t- ${uri}`);
             result.push(`\t\t- Dependencies`);
-            for (const dependency of fileNode.includedBy) {
+            for (const dependency of fileNode.includes) {
                 result.push(`\t\t\t- ${dependency.uri}`);
             }
             result.push(`\t\t- Dependents`);
-            for (const dependent of fileNode.includes) {
+            for (const dependent of fileNode.includedBy) {
                 result.push(`\t\t\t- ${dependent.uri}`);
             }
         }

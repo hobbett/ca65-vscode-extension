@@ -221,6 +221,26 @@ connection.onRequest('ca65/dumpSymbolTables', () => {
     }
 });
 
+// Custom request from the client to dump include graph
+connection.onRequest('ca65/dumpIncludesGraph', () => {
+    connection.console.info('Current Includes Graph:');
+    connection.console.info(includesGraph.toString());
+});
+
+// Custom request from the client to dump exports map
+connection.onRequest('ca65/dumpExportsMap', () => {
+    connection.console.info('Current Exports Map:');
+    exportsMap.dump();
+});
+
+// Custom request from the client to dump symbol tables
+connection.onRequest('ca65/dumpSymbolTables', () => {
+    for (const [uri, table] of symbolTables) {
+        connection.console.info(`Symbol Table for ${uri}:`);
+        table.dump();
+    }
+});
+
 // --- Event Listeners ---
 documents.onDidChangeContent(async (change) => {
     await updateAndValidate(change.document);

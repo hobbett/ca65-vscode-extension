@@ -119,6 +119,14 @@
             {
                 "command": "ca65.dumpSymbolTables",
                 "title": "ca65: Dump Symbol Tables to Output"
+            },
+            {
+                "command": "ca65.dumpIncludesGraph",
+                "title": "ca65: Dump Includes Graph to Output"
+            },
+            {
+                "command": "ca65.dumpExportsMap",
+                "title": "ca65: Dump Exports Map to Output"
             }
         ],
         "snippets": [

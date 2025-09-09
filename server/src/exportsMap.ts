@@ -81,4 +81,16 @@ export class ExportsMap {
             this.global.delete(baseName);
         }
     }
+
+    dump() {
+        console.log("\n--- Exports Map Dump ---");
+        for (const [baseName, stack] of this.global) {
+            if (stack.length === 0) continue;
+            console.log(`* ${baseName}:`);
+            for (let i = stack.length - 1; i >= 0; i--) {
+                const exp = stack[i];
+                console.log(`    - ${exp.name} (URI: ${exp.uri}, line ${exp.definition.start.line})`);
+            }
+        }
+    }
 }

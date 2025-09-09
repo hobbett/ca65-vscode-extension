@@ -119,10 +119,6 @@ export function resolveLocalReference(
         }
 
         if (localEntity) {
-            // Break early if it's an import, since we know that it should be exported. If it is a
-            // global, we don't yet know if it is an exporting global (i.e. the symbol is defined
-            // within the current translation unit) or if it is an importing global. Thus, continue
-            // searching within the translation unit in case it is defined elsewhere.
             if (localEntity instanceof Import) {
                 importEntity = localEntity;
                 break;

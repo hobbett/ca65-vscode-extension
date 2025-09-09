@@ -79,6 +79,18 @@ export function activate(context: ExtensionContext) {
 			client.sendRequest('ca65/dumpSymbolTables');
 		}
 	}));
+
+	context.subscriptions.push(commands.registerCommand('ca65.dumpIncludesGraph', () => {
+		if (client) {
+			client.sendRequest('ca65/dumpIncludesGraph');
+		}
+	}));
+
+	context.subscriptions.push(commands.registerCommand('ca65.dumpExportsMap', () => {
+		if (client) {
+			client.sendRequest('ca65/dumpExportsMap');
+		}
+	}));
 }
 
 export function deactivate(): Thenable<void> | undefined {
