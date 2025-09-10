@@ -156,6 +156,8 @@ async function getCompilerDiagnosticsForUnit(
 
     const args = [relativeFilePath, '-o', process.platform === 'win32' ? 'NUL' : '/dev/null'];
 
+    if (settings.implicitImports) args.push('--auto-import');
+
     for (const includeDir of resolveWorkspaceRelativeDirs(textDocument.uri, settings.includeDirs)) {
         args.push('-I', includeDir);
     }

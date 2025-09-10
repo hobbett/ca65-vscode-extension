@@ -9,6 +9,7 @@ export interface Ca65Settings {
     importFromHints: boolean;
     additionalExtensions: string[];
     smartFolding: boolean;
+    implicitImports: boolean;
 }
 
 export const documentSettings: Map<string, Thenable<Ca65Settings>> = new Map();

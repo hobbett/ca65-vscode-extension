@@ -564,20 +564,27 @@ async function getCompletionSymbols(
             let label = currentScope.findRelativeName(exportEntity);
             let kind = getCompletionItemKind(getLSPSymbolKind(resolvedExport));
             let detail = `${getCompletionItemDetail(resolvedExport)}`;
+            let labelDetails;
+            let data;
+            if (!settings.implicitImports) {
+                labelDetails = {
+                    description: `import from ${relativeUri}`
+                };
+
+                data = {
+                    uri: document.uri,
+                    editAction: 'import',
+                    importSymbol: resolvedExport.name
+                }
+            }
 
             completionItems.push({
                 label,
                 kind,
                 detail,
-                labelDetails: {
-                    description: `import from ${relativeUri}`
-                },
-                sortText: AUTO_IMPORT_ITEM_PREFIX + label,
-                data: {
-                    uri: document.uri,
-                    editAction: 'import',
-                    importSymbol: resolvedExport.name
-                }
+                labelDetails,
+                data,
+                sortText: AUTO_IMPORT_ITEM_PREFIX + label
             });
         }
     }
