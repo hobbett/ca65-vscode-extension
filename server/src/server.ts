@@ -75,6 +75,7 @@ connection.onInitialize(async (params: InitializeParams) => {
             workspaceSymbolProvider: true,
             completionProvider: {
                 triggerCharacters: ['.', '@'],
+                resolveProvider: true,
             },
             inlayHintProvider: { resolveProvider: false },
             documentHighlightProvider: true,

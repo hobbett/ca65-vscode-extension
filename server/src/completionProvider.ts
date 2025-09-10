@@ -294,6 +294,28 @@ export function initializeCompletionProvider(connection: _Connection, documents:
             return completionItems;
         }
     });
+
+    connection.onCompletionResolve(
+        async (item: CompletionItem): Promise<CompletionItem> => {
+            const data = item.data;
+            if (!data || !data.uri) {
+                return item;
+            }
+
+            const document = documents.get(data.uri);
+            if (!document) {
+                return item;
+            }
+
+            if (data.editAction === 'include' && data.includePath) {
+                item.additionalTextEdits = [makeIncludeEdit(document, data.includePath)];
+            } else if (data.editAction === 'import' && data.importSymbol) {
+                item.additionalTextEdits = [makeImportEdit(document, data.importSymbol)];
+            }
+
+            return item;
+        }
+    );
 }
 
 async function getCompletionMacros(
@@ -351,8 +373,12 @@ async function getCompletionMacros(
                 labelDetails: {
                     description: `include ${canonicalPath}`
                 },
-                additionalTextEdits: [makeIncludeEdit(document, canonicalPath)],
-                sortText: AUTO_INCLUDE_ITEM_PREFIX + label
+                sortText: AUTO_INCLUDE_ITEM_PREFIX + label,
+                data: {
+                    uri: document.uri,
+                    editAction: 'include',
+                    includePath: canonicalPath
+                }
             });
         }
     }
@@ -475,8 +501,12 @@ async function getCompletionSymbols(
                         labelDetails: {
                             description: `include ${canonicalPath}`
                         },
-                        additionalTextEdits: [makeIncludeEdit(document, canonicalPath)],
-                        sortText: AUTO_INCLUDE_ITEM_PREFIX + label
+                        sortText: AUTO_INCLUDE_ITEM_PREFIX + label,
+                        data: {
+                            uri: document.uri,
+                            editAction: 'include',
+                            includePath: canonicalPath
+                        }
                     });
                 }
             }
@@ -511,8 +541,12 @@ async function getCompletionSymbols(
                     labelDetails: {
                         description: `include ${canonicalPath}`
                     },
-                    additionalTextEdits: [makeIncludeEdit(document, canonicalPath)],
-                    sortText: AUTO_INCLUDE_ITEM_PREFIX + label
+                    sortText: AUTO_INCLUDE_ITEM_PREFIX + label,
+                    data: {
+                        uri: document.uri,
+                        editAction: 'include',
+                        includePath: canonicalPath
+                    }
                 });
             }
         }
@@ -538,8 +572,12 @@ async function getCompletionSymbols(
                 labelDetails: {
                     description: `import from ${relativeUri}`
                 },
-                additionalTextEdits: [makeImportEdit(document, resolvedExport.name)],
-                sortText: AUTO_IMPORT_ITEM_PREFIX + label
+                sortText: AUTO_IMPORT_ITEM_PREFIX + label,
+                data: {
+                    uri: document.uri,
+                    editAction: 'import',
+                    importSymbol: resolvedExport.name
+                }
             });
         }
     }
