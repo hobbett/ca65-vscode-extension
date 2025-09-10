@@ -141,6 +141,7 @@ connection.onInitialized(async () => {
             // The glob library accepts an array of patterns, so we pass all of them.
             const files = await glob(allGlobs, { cwd: folderPath, nodir: true });
 
+            const docs = [];
             for (const file of files) {
                 try {
                     const filePath = path.join(folderPath, file);
@@ -148,13 +149,18 @@ connection.onInitialized(async () => {
                     const content = await fs.readFile(filePath, 'utf-8');
                     const doc = TextDocument.create(uri, 'ca65', 0, content);
                     
-                    const symbolTable = await scanDocument(doc);
-                    symbolTables.set(uri, symbolTable);
-                    includesGraph.updateIncludes(uri, symbolTable.includedFiles);
-                    exportsMap.updateExports(uri, symbolTable.exports);
+                    docs.push(doc);
+                    symbolTables.set(uri, new SymbolTable(doc.uri));
                 } catch (e) {
                     connection.console.error(`Failed to scan ${file}: ${e}`);
                 }
+            }
+
+            for (const doc of docs) {
+                const symbolTable = await scanDocument(doc);
+                symbolTables.set(doc.uri, symbolTable);
+                includesGraph.updateIncludes(doc.uri, symbolTable.includedFiles);
+                exportsMap.updateExports(doc.uri, symbolTable.exports);
             }
         }
     } catch (e) {

@@ -501,7 +501,7 @@ export async function scanDocument(document: TextDocument): Promise<SymbolTable>
         return true;
     }
 
-    const maybeHandleGenericLine = async (line: number, text: string): Promise<boolean> => {
+    const maybeHandleGenericLine = (line: number, text: string): boolean => {
         const { label, command, args } = parseLine(text);
         if (label) {
             if (label.text.startsWith('@')) {
@@ -721,7 +721,7 @@ export async function scanDocument(document: TextDocument): Promise<SymbolTable>
                     if (match) {
                         const filename = match[2];
                         const targetUri =
-                            await resolveIncludeUri(document.uri, filename, settings.includeDirs);
+                            resolveIncludeUri(document.uri, filename, settings.includeDirs);
                         if (targetUri) {
                             symbolTable.includedFiles.push(targetUri);
                         }
@@ -809,7 +809,7 @@ export async function scanDocument(document: TextDocument): Promise<SymbolTable>
 
         if (maybeHandleConstantAssignment(lineNumber, text)) continue;
         if (maybeHandleVariableAssignment(lineNumber, text)) continue;
-        if (await maybeHandleGenericLine(lineNumber, text)) continue;
+        if (maybeHandleGenericLine(lineNumber, text)) continue;
         // Empty line?
     }
 

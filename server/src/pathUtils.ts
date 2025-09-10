@@ -54,11 +54,11 @@ export function resolveWorkspaceRelativeDirs(
     return resolvedPaths;
 }
 
-export async function resolveIncludeUri(
+export function resolveIncludeUri(
     currentFileUri: string,
     includeFile: string,
     includeDirs: string[] | undefined,
-): Promise<string | null> {
+): string | null {
     const currentDir = path.dirname(URI.parse(currentFileUri).fsPath);
     const resolvedIncludeDirs = resolveWorkspaceRelativeDirs(currentFileUri, includeDirs);
     const directoriesToSearch = [currentDir, ...resolvedIncludeDirs];
@@ -69,21 +69,16 @@ export async function resolveIncludeUri(
         if (symbolTables.has(uri)) {
             return uri
         }
-
-        try {
-            await fs.access(fullPath);
-            return uri;
-        } catch {}
     }
 
     return null;
 }
 
-export async function findCanonicalIncludePath(
+export function findCanonicalIncludePath(
     currentFileUri: string,
     importFileUri: string,
     includeDirs: string[] | undefined,
-): Promise<string> {
+): string {
     const currentDir = path.dirname(URI.parse(currentFileUri).fsPath);
     const importFsPath = URI.parse(importFileUri).fsPath;
 
@@ -107,7 +102,7 @@ export async function findCanonicalIncludePath(
     });
 
     for (const candidate of candidates) {
-        const resolvedUri = await resolveIncludeUri(currentFileUri, candidate, includeDirs);
+        const resolvedUri = resolveIncludeUri(currentFileUri, candidate, includeDirs);
         if (resolvedUri && resolvedUri === URI.parse(importFileUri).fsPath) {
             return candidate; // Found canonical relative path
         }
