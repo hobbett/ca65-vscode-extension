@@ -103,7 +103,7 @@ export function findCanonicalIncludePath(
 
     for (const candidate of candidates) {
         const resolvedUri = resolveIncludeUri(currentFileUri, candidate, includeDirs);
-        if (resolvedUri && resolvedUri === URI.parse(importFileUri).fsPath) {
+        if (resolvedUri && resolvedUri === importFileUri) {
             return candidate; // Found canonical relative path
         }
     }
