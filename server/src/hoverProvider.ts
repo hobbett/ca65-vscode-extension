@@ -42,7 +42,6 @@ export function initializeHoverProvider(connection: _Connection, documents: Text
             );
             if (foundEntity) {
                 let definitionDocument = documents.get(foundEntity.uri);
-                console.log(`resolved entity ${foundEntity}`);
 
                 if (!definitionDocument) {
                     try {
@@ -82,7 +81,6 @@ export function initializeHoverProvider(connection: _Connection, documents: Text
 
                 if (word.startsWith('.')) {
                     const name = word.slice(1).toUpperCase();
-                    console.log(`word starts with . yo: ${name}`);
                     let data = directiveData[name];
                     if (typeof data === 'string') data = directiveData[data];
                     if (data) {

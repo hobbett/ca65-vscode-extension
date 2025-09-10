@@ -228,7 +228,6 @@ async function getCompilerDiagnosticsForUnit(
                     } else if (foundTokenMatch) {
                         const token = foundTokenMatch[1];
                         const tokenIndex = lineText.indexOf(token);
-                        console.log(`tokenindex ${tokenIndex}`)
                         if (tokenIndex !== -1) {
                             diagnostic.range = Range.create(lineNumber, tokenIndex, lineNumber, tokenIndex + token.length);
                         }
