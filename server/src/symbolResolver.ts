@@ -324,7 +324,7 @@ export function isEntityUsed(
 
         for (const ref of symbolTable.getAllReferences()) {
             if (ref.name !== entity.name) continue;
-            if (resolveLocalReference(ref, allSymbolTables, includesGraph) === entity) {
+            if (resolveLocalReference(ref, allSymbolTables, includesGraph)) {
                 refCount++;
                 // Check if the ref count is more than 1 (the definition).
                 if (refCount > 1) {
