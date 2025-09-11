@@ -7,7 +7,7 @@ import {
     Location,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { includesGraph, initializationGate, symbolTables } from './server';
+import { getDocumentSettings, includesGraph, initializationGate, symbolTables } from './server';
 import { getAllReferenceLocationsForEntity, resolveReferenceAtPosition } from './symbolResolver';
 import { findAllCheapLocalLabelReferences } from './cheapLocalLabelUtils';
 
@@ -25,17 +25,20 @@ export function initializeRenameProvider(connection: _Connection, documents: Tex
             return null;
         }
 
+        const settings = await getDocumentSettings(uri);
+
         const edits: { [uri: string]: TextEdit[] } = {};
         let allLocations: Location[];
 
         const foundEntity = resolveReferenceAtPosition(
-            uri, params.position, symbolTables, includesGraph
+            uri, params.position, symbolTables, includesGraph, settings.implicitImports
         );
         if (foundEntity) {
             allLocations = getAllReferenceLocationsForEntity(
                 foundEntity,
                 symbolTables,
-                includesGraph
+                includesGraph,
+                settings.implicitImports
             );
         } else {
             // Didn't find a real symbol, check if it's a cheap label

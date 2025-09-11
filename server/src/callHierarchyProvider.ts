@@ -9,7 +9,7 @@ import {
     CallHierarchyOutgoingCall,
 } from 'vscode-languageserver/node';
 import { Range, TextDocument } from 'vscode-languageserver-textdocument';
-import { includesGraph, initializationGate, symbolTables } from './server';
+import { getDocumentSettings, includesGraph, initializationGate, symbolTables } from './server';
 import { getAllReferencesForEntity, resolveReferenceAtPosition, getLSPSymbolKind, resolveReference } from './symbolResolver';
 import { Scope, ScopeKind, Symbol, SymbolTableEntity } from './symbolTable';
 
@@ -28,8 +28,10 @@ export function initializeCallHierarchyProvider(
                 return null;
             }
 
+            const settings = await getDocumentSettings(params.textDocument.uri);
+
             const foundEntity = resolveReferenceAtPosition(
-                params.textDocument.uri, params.position, symbolTables, includesGraph
+                params.textDocument.uri, params.position, symbolTables, includesGraph, settings.implicitImports
             );
             if (!foundEntity) {
                 return null;
@@ -60,6 +62,8 @@ export function initializeCallHierarchyProvider(
         ): Promise<CallHierarchyIncomingCall[] | null> => {
             await initializationGate.isInitialized;
 
+            const settings = await getDocumentSettings(params.item.uri);
+
             if (!params.item.data) return null;
             const {uri, name, scopeStack} = params.item.data;
             if (!uri || !name || !scopeStack ) return null;
@@ -74,7 +78,8 @@ export function initializeCallHierarchyProvider(
             const allReferences = getAllReferencesForEntity(
                 entity,
                 symbolTables,
-                includesGraph
+                includesGraph,
+                settings.implicitImports
             );
 
             // 3. Group references by the function/scope they are called FROM.
@@ -119,6 +124,8 @@ export function initializeCallHierarchyProvider(
         ): Promise<CallHierarchyOutgoingCall[] | null> => {
             await initializationGate.isInitialized;
 
+            const settings = await getDocumentSettings(params.item.uri);
+
             if (!params.item.data) return null;
             const {uri, name, scopeStack} = params.item.data;
             if (!uri || !name || !scopeStack ) return null;
@@ -136,7 +143,7 @@ export function initializeCallHierarchyProvider(
             const callsByDefinition = new Map<SymbolTableEntity, Range[]>();
             for (const ref of outgoingReferences) {
                 const resolvedEntity =
-                    resolveReference(ref, symbolTables, includesGraph);
+                    resolveReference(ref, symbolTables, includesGraph, settings.implicitImports);
                 if (resolvedEntity) {
                     if (!callsByDefinition.has(resolvedEntity)) {
                         callsByDefinition.set(resolvedEntity, []);

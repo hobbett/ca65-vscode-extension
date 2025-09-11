@@ -10,7 +10,8 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { getAnonymousLabelDefinition } from './anonymousLabelUtils';
 import { findCheapLocalLabelDefinition } from './cheapLocalLabelUtils';
 import { resolveReferenceAtPosition } from './symbolResolver';
-import { includesGraph, initializationGate, symbolTables } from './server';
+import { getDocumentSettings, includesGraph, initializationGate, symbolTables } from './server';
+import { documentSettings } from './settings';
 
 export function initializeDefinitionProvider(connection: _Connection, documents: TextDocuments<TextDocument>) {
     /**
@@ -23,9 +24,11 @@ export function initializeDefinitionProvider(connection: _Connection, documents:
         if (!document) {
             return undefined;
         }
+        
+        const settings = await getDocumentSettings(params.textDocument.uri);
 
         const foundEntity = resolveReferenceAtPosition(
-            params.textDocument.uri, params.position, symbolTables, includesGraph
+            params.textDocument.uri, params.position, symbolTables, includesGraph, settings.implicitImports
         );
 
         if (foundEntity) {

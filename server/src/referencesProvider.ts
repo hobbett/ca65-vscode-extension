@@ -5,7 +5,7 @@ import {
     ReferenceParams,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { includesGraph, initializationGate, performanceMonitor, symbolTables } from './server';
+import { getDocumentSettings, includesGraph, initializationGate, performanceMonitor, symbolTables } from './server';
 import { findAllCheapLocalLabelReferences } from './cheapLocalLabelUtils';
 import { findAllAnonLabelReferences } from './anonymousLabelUtils';
 import { getAllReferenceLocationsForEntity, resolveReferenceAtPosition } from './symbolResolver';
@@ -26,16 +26,19 @@ export function initializeReferencesProvider(connection: _Connection, documents:
             performanceMonitor.stop("onReferences");
             return undefined;
         }
+
+        const settings = await getDocumentSettings(uri);
         
         const foundEntity = resolveReferenceAtPosition(
-            uri, params.position, symbolTables, includesGraph
+            uri, params.position, symbolTables, includesGraph, settings.implicitImports
         );
 
         if (foundEntity) {
             const result = getAllReferenceLocationsForEntity(
                 foundEntity,
                 symbolTables,
-                includesGraph
+                includesGraph,
+                settings.implicitImports
             );
             performanceMonitor.stop("onReferences");
             return result;

@@ -14,7 +14,7 @@ import * as fs from 'fs/promises';
 import { mnemonicData, directiveData } from './dataManager';
 import { Macro, SymbolTableEntity } from './symbolTable';
 import { getLSPSymbolKind, resolveReference } from './symbolResolver';
-import { includesGraph, initializationGate, performanceMonitor, symbolTables } from './server';
+import { getDocumentSettings, includesGraph, initializationGate, performanceMonitor, symbolTables } from './server';
 
 export function initializeHoverProvider(connection: _Connection, documents: TextDocuments<TextDocument>) {
     connection.onHover(async ({ textDocument, position }: TextDocumentPositionParams): Promise<Hover | undefined> => {
@@ -33,12 +33,15 @@ export function initializeHoverProvider(connection: _Connection, documents: Text
             return undefined;
         }
 
+        const settings = await getDocumentSettings(textDocument.uri);
+
         const ref = symbolTable.getReferenceAtPosition(position);
         if (ref) {
             const foundEntity = resolveReference(
                 ref,
                 symbolTables,
-                includesGraph
+                includesGraph,
+                settings.implicitImports
             );
             if (foundEntity) {
                 let definitionDocument = documents.get(foundEntity.uri);

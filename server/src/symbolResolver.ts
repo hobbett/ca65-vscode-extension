@@ -6,6 +6,7 @@ import {
 import { SymbolTable, Symbol, SymbolTableEntity, Macro, Scope, ScopeKind, MacroKind, SymbolKind, ReferenceInfo, Export, Import } from './symbolTable';
 import { IncludesGraph } from './includesGraph';
 import { exportsMap, performanceMonitor, symbolTables } from './server';
+import { Ca65Settings } from './settings';
 
 const cachedLocalResolutionsPerUri: Map<string, Map<ReferenceInfo, SymbolTableEntity>> = new Map();
 const cachedExportResolutionsPerUri: Map<string, Map<Export, Symbol | Scope>> = new Map();
@@ -19,7 +20,8 @@ export function resolveReferenceAtPosition(
     uri: string,
     position: Position,
     allSymbolTables: Map<string, SymbolTable>,
-    includesGraph: IncludesGraph
+    includesGraph: IncludesGraph,
+    implicitImports: boolean
 ): SymbolTableEntity | undefined {
 
     const symbolTable = allSymbolTables.get(uri);
@@ -31,7 +33,7 @@ export function resolveReferenceAtPosition(
     if (!ref) {
         return undefined;
     }
-    const resolved = resolveReference(ref, allSymbolTables, includesGraph);
+    const resolved = resolveReference(ref, allSymbolTables, includesGraph, implicitImports);
     return resolved;
 }
 
@@ -47,6 +49,7 @@ export function resolveReference(
     ref: ReferenceInfo,
     allSymbolTables: Map<string, SymbolTable>,
     includesGraph: IncludesGraph, // Assuming your include graph type
+    implicitImports: boolean
 ): SymbolTableEntity | undefined {
     performanceMonitor.start('resolveReference');
 
@@ -59,6 +62,19 @@ export function resolveReference(
         const resolvedImport = resolveImport(localReference.name, symbolTables, includesGraph);
         performanceMonitor.stop('resolveReference');
         return resolvedImport ? resolvedImport : localReference; 
+    }
+
+    // If we didn't find a local reference, and implicit imports are enabled,
+    // and this is a symbol reference in the global scope, try to resolve it as an implicit import.
+    if (
+        !localReference
+        && implicitImports
+        && ref.context === 'symbol'
+        && (ref.qualifiers.length === 0 || ref.qualifiers[0].length === 0 /* Global scope */)
+    ) {
+        const impliedImport = resolveImport(ref.name, symbolTables, includesGraph);
+        performanceMonitor.stop('resolveReference');
+        return impliedImport;
     }
 
     // Nothing doing.
@@ -216,7 +232,8 @@ export function resolveExport(
 export function getAllReferencesForEntity(
     entity: SymbolTableEntity,
     allSymbolTables: Map<string, SymbolTable>,
-    includesGraph: IncludesGraph
+    includesGraph: IncludesGraph,
+    implicitImports: boolean
 ): ReferenceInfo[] {
     performanceMonitor.start('getAllReferencesForEntity');
     const allRefs: ReferenceInfo[] = [];
@@ -225,7 +242,7 @@ export function getAllReferencesForEntity(
         for (const ref of symbolTable.getAllReferences()) {
             if (ref.name !== entity.name) continue;
 
-            const refResult = resolveReference(ref, allSymbolTables, includesGraph);
+            const refResult = resolveReference(ref, allSymbolTables, includesGraph, implicitImports);
             if (refResult !== entity) continue;
             
             allRefs.push(ref);
@@ -237,11 +254,12 @@ export function getAllReferencesForEntity(
 }
 
 export function getAllReferenceLocationsForEntity(
-    entity: SymbolTableEntity,
+    entity: SymbolTableEntity,  
     allSymbolTables: Map<string, SymbolTable>,
-    includesGraph: IncludesGraph
+    includesGraph: IncludesGraph,
+    implicitImports: boolean = false
 ): Location[] {
-    return getAllReferencesForEntity(entity, allSymbolTables, includesGraph)
+    return getAllReferencesForEntity(entity, allSymbolTables, includesGraph, implicitImports)
         .map((ref) => { return { uri: ref.uri, range: ref.location }})
 }
 

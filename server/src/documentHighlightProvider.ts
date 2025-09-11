@@ -5,7 +5,7 @@ import {
     DocumentHighlight,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { includesGraph, initializationGate, symbolTables } from './server';
+import { getDocumentSettings, includesGraph, initializationGate, symbolTables } from './server';
 import { findAllCheapLocalLabelReferences } from './cheapLocalLabelUtils';
 import { findAllAnonLabelReferences } from './anonymousLabelUtils';
 import { getAllReferenceLocationsForEntity, resolveReferenceAtPosition } from './symbolResolver';
@@ -20,14 +20,16 @@ export function initializeDocumentHighlightProvider(connection: _Connection, doc
             return undefined;
         }
 
+        const settings = await getDocumentSettings(params.textDocument.uri);
+
         // First, try to find a standard symbol at the cursor's position.
         const foundEntity = resolveReferenceAtPosition(
-            params.textDocument.uri, params.position, symbolTables, includesGraph
+            params.textDocument.uri, params.position, symbolTables, includesGraph, settings.implicitImports
         );
         if (foundEntity) {
 
             const refLocations = getAllReferenceLocationsForEntity(
-                foundEntity, symbolTables, includesGraph
+                foundEntity, symbolTables, includesGraph, settings.implicitImports
             );
 
             return refLocations.filter(loc => loc.uri === document.uri)
