@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.5.4] - 2025-09-12
 - Fix auto-complete not working on last line
+- Fix labels not being scanned on last line
 
 ## [1.5.3] - 2025-09-11
 - Fix .global statements not counting towards symbol usage

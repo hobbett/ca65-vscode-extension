@@ -52,7 +52,7 @@ export function parseLine(line: string): {
     const colonIndex = rest.indexOf(':');
     if (colonIndex >= 0) {
         const nextChar = rest.charAt(colonIndex + 1);
-        if (!':<>+-'.includes(nextChar)) {
+        if (!nextChar || !':<>+-'.includes(nextChar)) {
             const labelText = rest.slice(0, colonIndex).trim();
             if (!labelText.match(/\s+/)) {
                 label = { text: labelText, index: restOffset };
