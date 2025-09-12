@@ -815,10 +815,9 @@ export async function scanDocument(document: TextDocument): Promise<SymbolTable>
 
     // Close any open scopes at EOF
     let openScope: Scope | null = currentScope;
-    const lastLineNum = document.lineCount - 1;
     while (openScope != null) {
         openScope.range.end = {
-            line: lastLineNum, character: 0
+            line: document.lineCount, character: 0
         };
         openScope = openScope.scope;
     }
