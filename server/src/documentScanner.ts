@@ -253,7 +253,7 @@ export async function scanDocument(document: TextDocument): Promise<SymbolTable>
 
     let currentSegment: string = 'CODE';
 
-    let currentLabel: Symbol | null = null;
+    let currentLabel: Symbol | undefined;
     let pendingLabelKindSet: boolean = false;
 
     let nextAnonLabelIndex = 0;
@@ -412,7 +412,7 @@ export async function scanDocument(document: TextDocument): Promise<SymbolTable>
 
         if (cmd === '.struct' || cmd === '.union') {
             const argsIndex = args?.index || command.index + command.text.length;
-            currentLabel = null;
+            currentLabel = undefined;
             let kind: ScopeKind = ScopeKind.Struct;
             if (cmd === '.union') {
                 kind = ScopeKind.Union;
@@ -547,7 +547,7 @@ export async function scanDocument(document: TextDocument): Promise<SymbolTable>
 
             switch (cmd) {
                 case '.proc': case '.scope': case '.struct': case '.union': case '.enum': {
-                    currentLabel = null;
+                    currentLabel = undefined;
                     let kind: ScopeKind = ScopeKind.Scope;
                     switch (cmd) {
                         case '.proc':
@@ -584,7 +584,7 @@ export async function scanDocument(document: TextDocument): Promise<SymbolTable>
                     return true;
                 }
                 case '.endproc':
-                    currentLabel = null;
+                    currentLabel = undefined;
                     if (!currentScope.scope) break;
                     if (currentScope.kind != ScopeKind.Proc) break;
                     if (currentScope.range) currentScope.range.end = {
@@ -593,7 +593,7 @@ export async function scanDocument(document: TextDocument): Promise<SymbolTable>
                     currentScope = currentScope.scope;
                     return true;
                 case '.endscope': {
-                    currentLabel = null;
+                    currentLabel = undefined;
                     if (!currentScope.scope) break;
                     if (currentScope.kind != ScopeKind.Scope) break;
                     if (currentScope.range) currentScope.range.end = {
@@ -603,7 +603,7 @@ export async function scanDocument(document: TextDocument): Promise<SymbolTable>
                     return true;
                 }
                 case '.macro': case '.mac': {
-                    currentLabel = null;
+                    currentLabel = undefined;
                     const name = args?.text.split(/\s+/)[0];
                     if (!name) return true;
                     addSingleReference('macro', line, name, argsIndex, currentScope);
@@ -622,7 +622,7 @@ export async function scanDocument(document: TextDocument): Promise<SymbolTable>
                     return true;
                 }
                 case '.define': {
-                    currentLabel = null;
+                    currentLabel = undefined;
                     const defMatch = argsText.match(/([a-zA-Z_@.][a-zA-Z0-9_]*)/);
                     const name = defMatch?.[0];
                     if (!name) return true;
@@ -788,7 +788,12 @@ export async function scanDocument(document: TextDocument): Promise<SymbolTable>
         return true;
     }
 
+    let hasLineContinuation = false;
+    let isPreviousLineContinued = false;
     for (let lineNumber = 0; lineNumber < document.lineCount; lineNumber++) {
+        isPreviousLineContinued = hasLineContinuation;
+        hasLineContinuation = false;
+
         let text = document.getText(
             Range.create(
                 lineNumber, 0,
@@ -796,8 +801,26 @@ export async function scanDocument(document: TextDocument): Promise<SymbolTable>
             )
         );
 
+        let hasComment = false;
         if (text.includes(';')) {
+            hasComment = true;
             text = text.slice(0, text.indexOf(`;`));
+        }
+
+        if (!hasComment && text.trimEnd().endsWith('\\')) {
+            hasLineContinuation = true;
+        }
+
+        if (isPreviousLineContinued) {
+            // Handle line continuations by simply adding all references, since these are generally
+            // used for long arithmetic expressions.
+            // TODO: Handle line continuations properly. We will probably need to re-write the
+            // parser using tree-sitter instead of our current fragile hand-rolled one.
+            addReferences(lineNumber, text, 0, currentScope);
+            if (currentLabel) {
+                currentLabel.range.end = { line: lineNumber, character: text.length - 1 };
+            }
+            continue;
         }
 
         addAnonymousLabelRefs(lineNumber, text);

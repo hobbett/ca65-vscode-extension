@@ -114,6 +114,11 @@
                     "type": "boolean",
                     "description": "Treats undefined symbols as imports without needing to explicitly declare them with `.import` (i.e. ca65's `--auto-import` flag).",
                     "default": false
+                },
+                "ca65.lineContinuations": {
+                    "type": "boolean",
+                    "description": "Enables `--feature line_continuations` for ca65 diagnostics. Please ensure that your ca65 executable supports this feature if you enable this setting.",
+                    "default": false
                 }
             }
         },

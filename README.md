@@ -33,6 +33,7 @@ This extension provides a full-featured language server to make writing `ca65` a
 * Symbol refs will always resolve to the symbol even if a macro is declared with the same name after it's declaration.
 * Auto-completion in the operand will only suggest symbols -- it will not suggest `struct`s in a `.tag` or `.sizeof` command
 * Anonymous structs are currently not handled to spec (the spec adds the members to an anonymous scope, but `ca65` actually adds them to the parent scope).
+* Symbol definitions on continuation lines (i.e. lines after a line ending in `\`) are ignored. Only symbol references are parsed, which is good enough for the common use case of using line continuations for long expressions.
 
 ## Pre-requisites
 - You must provide the `ca65` in your system's `PATH` or set setting `ca65.executablePath` to the absolute path of your `ca65` executable.

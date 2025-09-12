@@ -10,6 +10,7 @@ export interface Ca65Settings {
     additionalExtensions: string[];
     smartFolding: boolean;
     implicitImports: boolean;
+    lineContinuations: boolean;
 }
 
 export const documentSettings: Map<string, Thenable<Ca65Settings>> = new Map();
