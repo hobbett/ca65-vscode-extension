@@ -165,6 +165,10 @@ async function getCompilerDiagnosticsForUnit(
         args.push('--bin-include-dir', binIncludeDir);
     }
 
+    if (settings.lineContinuations) {
+        args.push('--feature', 'line_continuations');
+    }
+
     let stderr = '';
     try {
         const result = await execFileAsync(ca65Path, args, { cwd: workspaceRoot, signal });
