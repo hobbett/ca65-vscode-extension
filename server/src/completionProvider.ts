@@ -513,7 +513,6 @@ async function getCompletionSymbols(
 
             // Suggest including files that import symbols (i.e. headers)
             for (const importEntity of symbolTable.imports) {
-                if (seenImports.has(importEntity.name)) continue;
                 if (visibleFqns.has(importEntity.getFullyQualifiedName())) continue;
                 if (!canonicalPath) {
                     canonicalPath =

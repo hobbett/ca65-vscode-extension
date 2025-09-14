@@ -522,13 +522,13 @@ export class SymbolTable {
      * Pretty-print the entire symbol table: scopes, symbols, macros, and references.
      */
     dump(): void {
-        console.log("=== Symbol Table Dump ===");
+        console.log(`=== Symbol Table Dump for ${this.uri} ===`);
 
         // --- Root Scope ---
         const traverseScope = (scope: Scope, indent = 0) => {
             const pad = '  '.repeat(indent);
             const name = scope.name || '<root>';
-            console.log(`${pad}- Scope: ${name} [${scope.kind}] (${scope.range.start.line}:${scope.range.start.character} - ${scope.range.end.line}:${scope.range.end.character})`);
+            console.log(`${pad} - Scope: ${name} [${scope.kind}] (${scope.range.start.line}:${scope.range.start.character} - ${scope.range.end.line}:${scope.range.end.character})`);
 
             // Symbols
             for (const sym of scope.getSymbols()) {
@@ -545,31 +545,31 @@ export class SymbolTable {
 
         // --- Includes ---
         if (this.includedFiles.length > 0) {
-            console.log("\n--- Included Files ---");
+            console.log("\n --- Included Files ---");
             for (const file of this.includedFiles) {
-                console.log(`* ${file}`);
+                console.log(`  * ${file}`);
             }
         }
 
         // --- Macros ---
         const allMacros = this.getAllMacros();
         if (allMacros.length > 0) {
-            console.log("\n--- Macros ---");
+            console.log("\n --- Macros ---");
             for (const macro of allMacros) {
-                console.log(`* Macro: ${macro.name} [${macro.kind}] (${macro.range.start.line}:${macro.range.start.character} - ${macro.range.end.line}:${macro.range.end.character})`);
+                console.log(`  * Macro: ${macro.name} [${macro.kind}] (${macro.range.start.line}:${macro.range.start.character} - ${macro.range.end.line}:${macro.range.end.character})`);
             }
         }
 
         // --- References ---
         if (this.references.length > 0) {
-            console.log("\n--- References ---");
+            console.log("\n --- References ---");
             for (const ref of this.references) {
                 const qualifiers = [...ref.qualifiers, ref.name].join('::');
                 const scopeStr = ref.scope ? `${ref.scope.getFullyQualifiedName()}` : 'null';
-                console.log(`* Context: ${ref.context}, Qualified Name: ${qualifiers}, Scope: ${scopeStr}, Location: (${ref.location.start.line}:${ref.location.start.character} - ${ref.location.end.line}:${ref.location.end.character}), Calling Entity: (${ref.callingEntity ? ref.callingEntity.getFullyQualifiedName() : 'undefined'})`);
+                console.log(`  * Context: ${ref.context}, Qualified Name: ${qualifiers}, Scope: ${scopeStr}, Location: (${ref.location.start.line}:${ref.location.start.character} - ${ref.location.end.line}:${ref.location.end.character}), Calling Entity: (${ref.callingEntity ? ref.callingEntity.getFullyQualifiedName() : 'undefined'})`);
             }
         }
 
-        console.log("=== End of Symbol Table Dump ===");
+        console.log(`=== End of Symbol Table Dump ===`);
     }
 }

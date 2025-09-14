@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.7] - 2025-09-14
+- Fix auto-includes not showing if auto-import symbol is found first.
+- Show URI in symbol table dump.
+
 ## [1.5.6] - 2025-09-13
 - Fix `--feature line_continuations` in ca65 diagnostics
 
